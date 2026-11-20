@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SQL Crash Course</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1117;--sur:#1a1d2e;--sur2:#242740;--brd:#2d3155;--acc:#22d3ee;--acc2:#7c3aed;--grn:#4ade80;--red:#ef4444;--org:#fb923c;--txt:#e2e8f0;--mut:#94a3b8;--cod:#0d1117}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+#topbar{background:var(--sur);border-bottom:1px solid var(--brd);padding:0 14px;height:50px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#logo{font-weight:900;font-size:15px;color:var(--acc);white-space:nowrap}
+#session-timer{font-family:monospace;font-size:13px;color:var(--grn);background:rgba(74,222,128,.1);padding:3px 9px;border-radius:5px;border:1px solid rgba(74,222,128,.2);white-space:nowrap}
+#pbwrap{flex:1;background:var(--brd);height:5px;border-radius:3px;overflow:hidden}
+#pb{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .3s;border-radius:3px}
+#sctr{font-size:11px;color:var(--mut);white-space:nowrap}
+.tbtn{background:var(--sur2);border:1px solid var(--brd);color:var(--txt);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;white-space:nowrap}
+.tbtn:hover{border-color:var(--acc);color:var(--acc)}
+#main{display:flex;flex:1;overflow:hidden}
+#sidebar{width:210px;background:var(--sur);border-right:1px solid var(--brd);overflow-y:auto;flex-shrink:0;transition:margin .3s}
+#sidebar.hide{margin-left:-210px}
+.sb-head{padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mut);border-bottom:1px solid var(--brd)}
+.mi{padding:9px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid rgba(45,49,85,.4)}
+.mi:hover{background:var(--sur2)}
+.mi.on{background:rgba(34,211,238,.08);border-left:3px solid var(--acc);color:var(--acc)}
+.mn{font-size:9px;color:var(--mut);display:block;margin-bottom:1px}
+#ca{flex:1;overflow:hidden;display:flex;flex-direction:column}
+#cp{display:flex;flex:1;flex-direction:column;overflow:hidden}
+#sw{flex:1;overflow-y:auto;padding:28px 40px;max-width:900px;margin:0 auto;width:100%}
+.mbadge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 9px;border-radius:20px;background:rgba(124,58,237,.2);color:var(--acc2);border:1px solid rgba(124,58,237,.3);margin-bottom:10px}
+.stitle{font-size:26px;font-weight:800;margin-bottom:20px;background:linear-gradient(135deg,var(--txt),var(--acc));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+h3{font-size:14px;font-weight:700;color:var(--acc);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+h3::before{content:'';display:inline-block;width:3px;height:14px;background:var(--acc);border-radius:2px}
+p,li{font-size:13px;line-height:1.7}
+ul,ol{padding-left:18px}
+li{margin-bottom:4px}
+.sql{background:var(--cod);border:1px solid var(--brd);border-left:3px solid var(--acc);border-radius:7px;padding:14px 16px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;line-height:1.6;overflow-x:auto;margin:10px 0;white-space:pre}
+.kw{color:#22d3ee;font-weight:600}.str{color:#fb923c}.num{color:#4ade80}.cmt{color:#6b7280;font-style:italic}
+.tip{background:rgba(34,211,238,.07);border-left:3px solid var(--acc);border-radius:0 7px 7px 0;padding:10px 14px;margin:10px 0;font-size:12px}
+.tip strong{color:var(--acc)}
+.warn{background:rgba(239,68,68,.07);border-left:3px solid var(--red);border-radius:0 7px 7px 0;padding:10px 14px;margin:10px 0;font-size:12px}
+.warn strong{color:var(--red)}
+.iq{background:rgba(124,58,237,.07);border-left:3px solid var(--acc2);border-radius:0 7px 7px 0;padding:10px 14px;margin:10px 0;font-size:12px}
+.iq strong{color:var(--acc2)}
+.asc{background:var(--cod);border:1px solid var(--brd);border-radius:7px;padding:14px;font-family:monospace;font-size:11px;line-height:1.5;color:#a3e635;overflow-x:auto;white-space:pre;margin:10px 0}
+.tc{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.tc th{background:var(--sur2);padding:8px 10px;text-align:left;border:1px solid var(--brd);color:var(--acc);font-weight:700}
+.tc td{padding:7px 10px;border:1px solid var(--brd);vertical-align:top}
+.tc tr:nth-child(even) td{background:rgba(36,39,64,.4)}
+.sab{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);color:var(--acc2);padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;margin-top:6px;display:inline-block}
+.ansd{display:none;margin-top:8px;padding:10px;background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);border-radius:7px;font-size:12px}
+.qb{background:var(--sur2);border:1px solid var(--brd);border-radius:7px;padding:12px 14px;margin-bottom:8px}
+.qn{font-size:10px;font-weight:700;color:var(--acc);margin-bottom:4px}
+.qt{font-size:12px;font-weight:600;margin-bottom:3px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}
+#bnav{background:var(--sur);border-top:1px solid var(--brd);padding:9px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.nb{background:var(--sur2);border:1px solid var(--brd);color:var(--txt);padding:7px 18px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600}
+.nb:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
+.nb:disabled{opacity:.3;cursor:not-allowed}
+.nb.p{background:rgba(34,211,238,.12);border-color:var(--acc);color:var(--acc)}
+#sinfo{text-align:center}
+#stm{font-size:12px;font-weight:600}
+#smm{font-size:10px;color:var(--mut);margin-top:2px}
+#tabs{display:flex;gap:1px;padding:0 20px;background:var(--sur);border-top:1px solid var(--brd);flex-shrink:0}
+.tab{padding:7px 16px;font-size:12px;cursor:pointer;color:var(--mut);border-bottom:2px solid transparent}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+.tab:hover:not(.on){color:var(--txt)}
+#idep,#asnp,#stsp{display:none;flex:1;overflow:hidden}
+#idep.on,#asnp.on,#stsp.on{display:flex}
+/* IDE */
+#idel{display:flex;width:100%;overflow:hidden}
+#ec{width:50%;display:flex;flex-direction:column;border-right:1px solid var(--brd)}
+#rc{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#etb{background:var(--sur);padding:7px 10px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:8px;flex-shrink:0}
+#dbs{font-size:11px;color:var(--mut);margin-left:auto}
+#rbtn{background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:var(--grn);padding:5px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}
+#rbtn:hover{background:rgba(74,222,128,.22)}
+#clrbtn{background:var(--sur2);border:1px solid var(--brd);color:var(--mut);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px}
+#sqled{flex:1;background:var(--cod);border:none;color:#e2e8f0;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;padding:14px;resize:none;outline:none;line-height:1.6}
+#rtb{background:var(--sur);padding:7px 10px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut);flex-shrink:0}
+#res{flex:1;overflow:auto;padding:10px}
+.rmeta{font-size:11px;color:var(--grn);margin-bottom:6px;font-family:monospace}
+.rtbl{border-collapse:collapse;font-size:12px}
+.rtbl th{background:var(--sur2);padding:6px 10px;text-align:left;border:1px solid var(--brd);color:var(--acc);font-size:11px;white-space:nowrap}
+.rtbl td{padding:5px 10px;border:1px solid var(--brd);font-family:monospace;font-size:11px;white-space:nowrap}
+.rtbl tr:nth-child(even) td{background:rgba(36,39,64,.4)}
+.nv{color:var(--mut);font-style:italic}
+.tbw{overflow-x:auto}
+.errmsg{color:var(--red);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);padding:10px;border-radius:5px;font-family:monospace;font-size:12px}
+.okmsg{color:var(--grn);font-size:12px;padding:6px}
+#scp{width:170px;background:var(--sur);border-left:1px solid var(--brd);overflow-y:auto;flex-shrink:0}
+.scph{padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mut);border-bottom:1px solid var(--brd)}
+.sct{padding:7px 10px;border-bottom:1px solid var(--brd)}
+.sctn{font-size:11px;font-weight:700;color:var(--acc);cursor:pointer}
+.scc{font-size:10px;color:var(--mut);padding-left:6px;line-height:1.6}
+/* Assignments */
+#asnp{flex-direction:column}
+#al{display:flex;flex:1;overflow:hidden}
+#ali{width:260px;overflow-y:auto;border-right:1px solid var(--brd)}
+.af{padding:8px 10px;border-bottom:1px solid var(--brd);display:flex;gap:5px;flex-wrap:wrap}
+.fb{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--brd);background:var(--sur2);color:var(--mut);cursor:pointer}
+.fb.on{border-color:var(--acc);color:var(--acc);background:rgba(34,211,238,.08)}
+.ai{padding:11px 12px;border-bottom:1px solid var(--brd);cursor:pointer}
+.ai:hover{background:var(--sur2)}
+.ai.on{background:rgba(34,211,238,.06);border-left:2px solid var(--acc)}
+.ai.done{border-left:2px solid var(--grn)}
+.aitt{font-size:12px;font-weight:600}
+.aimeta{font-size:10px;color:var(--mut);margin-top:2px;display:flex;gap:6px}
+.bdg{padding:1px 6px;border-radius:9px;font-size:9px;font-weight:700}
+.bb{background:rgba(74,222,128,.12);color:var(--grn)}
+.bi{background:rgba(251,146,60,.12);color:var(--org)}
+.ba{background:rgba(239,68,68,.12);color:var(--red)}
+.bp{background:rgba(74,222,128,.2);color:var(--grn)}
+#adet{flex:1;overflow-y:auto;padding:20px 24px}
+.adtl{font-size:18px;font-weight:800;margin-bottom:8px}
+.adesc{font-size:13px;line-height:1.7;margin-bottom:14px}
+.aschema{background:var(--sur2);border:1px solid var(--brd);border-radius:7px;padding:10px;font-size:11px;font-family:monospace;color:var(--mut);margin-bottom:14px}
+#ahbtn{background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3);color:var(--org);padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;margin-bottom:8px}
+#ahint{display:none;background:rgba(251,146,60,.07);border-left:3px solid var(--org);padding:9px 12px;border-radius:0 5px 5px 0;font-size:12px;margin-bottom:12px}
+#ased{width:100%;height:120px;background:var(--cod);border:1px solid var(--brd);border-radius:7px;color:var(--txt);font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;padding:10px;outline:none;resize:vertical;margin-bottom:10px}
+.aact{display:flex;gap:8px;margin-bottom:12px}
+#arbtn{background:rgba(34,211,238,.12);border:1px solid var(--acc);color:var(--acc);padding:7px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}
+#acbtn{background:rgba(74,222,128,.12);border:1px solid var(--grn);color:var(--grn);padding:7px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}
+#afb{margin-top:8px;padding:10px 14px;border-radius:7px;font-size:13px;display:none}
+.fpas{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--grn)}
+.ffal{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+#cdwrap{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--sur2);border-radius:7px;border:1px solid var(--brd);margin-bottom:12px}
+#cdd{font-family:monospace;font-size:18px;font-weight:700;min-width:65px}
+.cw{color:var(--org)!important}.cd{color:var(--red)!important}
+.cdbtn{font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid var(--brd);background:var(--sur);color:var(--mut);cursor:pointer}
+.cdbtn:hover{border-color:var(--acc);color:var(--acc)}
+/* Stats */
+#stsp{flex-direction:column;overflow-y:auto;padding:24px;gap:16px}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.sc{background:var(--sur);border:1px solid var(--brd);border-radius:10px;padding:18px}
+.scv{font-size:28px;font-weight:800;color:var(--acc);font-family:monospace}
+.scl{font-size:12px;color:var(--mut);margin-top:4px}
+.mtr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd)}
+.mtbw{flex:1;background:var(--brd);height:5px;border-radius:3px;overflow:hidden}
+.mtb{height:100%;background:var(--acc2);border-radius:3px}
+.mtl{font-size:11px;min-width:140px}
+.mtv{font-size:11px;font-family:monospace;color:var(--mut);min-width:55px;text-align:right}
+#rstbtn{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;align-self:flex-start}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div id="logo">⚡ SQL Crash Course</div>
+  <div style="display:flex;flex-direction:column;align-items:center">
+    <div style="font-size:9px;color:var(--mut)">SESSION</div>
+    <div id="session-timer">00:00:00</div>
+  </div>
+  <div id="pbwrap"><div id="pb" style="width:0%"></div></div>
+  <div id="sctr">1 / 1</div>
+  <button class="tbtn" onclick="toggleSB()">☰ Modules</button>
+  <button class="tbtn" onclick="showTab('ide')">⌨ IDE</button>
+  <button class="tbtn" onclick="showTab('asn')">📝 Practice</button>
+  <button class="tbtn" onclick="showTab('sts')">📊 Stats</button>
+</div>
+<div id="main">
+  <div id="sidebar">
+    <div class="sb-head">Course Modules</div>
+    <div id="mnav"></div>
+  </div>
+  <div id="ca">
+    <div id="cp">
+      <div id="sw"></div>
+    </div>
+    <div id="idep">
+      <div id="idel">
+        <div id="ec">
+          <div id="etb">
+            <span style="font-size:11px;font-weight:700;color:var(--acc)">SQL EDITOR</span>
+            <button id="rbtn" onclick="runQ()">▶ Run (Ctrl+Enter)</button>
+            <button id="clrbtn" onclick="document.getElementById('sqled').value=''">Clear</button>
+            <span id="dbs">● Loading…</span>
+          </div>
+          <textarea id="sqled" placeholder="-- Write SQL here, Ctrl+Enter to run&#10;SELECT * FROM employees LIMIT 5;"></textarea>
+        </div>
+        <div id="rc">
+          <div id="rtb">
+            <span style="font-weight:700;color:var(--acc);font-size:11px">RESULTS</span>
+            <span id="rcnt"></span>
+          </div>
+          <div id="res"><div style="color:var(--mut);font-size:12px;padding:16px">Run a query to see results.</div></div>
+        </div>
+        <div id="scp">
+          <div class="scph">Schema</div>
+          <div id="scont"></div>
+        </div>
+      </div>
+    </div>
+    <div id="asnp">
+      <div id="al">
+        <div id="ali">
+          <div class="af">
+            <button class="fb on" onclick="fltA('all',this)">All</button>
+            <button class="fb" onclick="fltA('beginner',this)">Easy</button>
+            <button class="fb" onclick="fltA('intermediate',this)">Med</button>
+            <button class="fb" onclick="fltA('advanced',this)">Hard</button>
+          </div>
+          <div id="aitems"></div>
+        </div>
+        <div id="adet"><div style="color:var(--mut);font-size:13px">← Pick an assignment</div></div>
+      </div>
+    </div>
+    <div id="stsp">
+      <h2 style="font-size:20px;font-weight:800">Learning Stats</h2>
+      <div class="sg" id="scards"></div>
+      <h3 style="font-size:14px;font-weight:700;color:var(--acc)">Time per Module</h3>
+      <div id="mtimes"></div>
+      <button id="rstbtn" onclick="rstAll()">Reset Progress</button>
+    </div>
+  </div>
+</div>
+<div id="tabs">
+  <div class="tab on" id="tab-course" onclick="showTab('course')">📚 Course</div>
+  <div class="tab" id="tab-ide" onclick="showTab('ide')">⌨ IDE</div>
+  <div class="tab" id="tab-asn" onclick="showTab('asn')">📝 Assignments</div>
+  <div class="tab" id="tab-sts" onclick="showTab('sts')">📊 Stats</div>
+</div>
+<div id="bnav">
+  <button class="nb" id="pbtn" onclick="prevS()">← Prev</button>
+  <div id="sinfo"><div id="stm">-</div><div id="smm">-</div></div>
+  <button class="nb p" id="nxbtn" onclick="nextS()">Next →</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<script>
+// ── SLIDES ──────────────────────────────────────────────────────────────────
+const slides=[
+{m:1,mt:"MODULE 1: DB Fundamentals",t:"What is Data & Why Databases?",h:`
+<p>Data is raw facts: <em>names, prices, dates, quantities</em>. A database is an organized, persistent collection of data that can be searched, updated, and shared by many users simultaneously.</p>
+<div class="two">
+<div>
+<h3>Files — The Wrong Way</h3>
+<div class="asc">customers.txt    ← who edits this?
+orders.csv       ← duplicated data
+products.xlsx    ← version conflicts
+user_data.json   ← no relationships
+backup_old.txt   ← which is real?</div>
+<ul><li>No concurrent access</li><li>No search / no joins</li><li>Easy to corrupt</li><li>No security</li><li>No relationships</li></ul>
+</div>
+<div>
+<h3>Database — The Right Way</h3>
+<div class="asc">┌─────────────────────┐
+│   DATABASE          │
+│  ┌───────────────┐  │
+│  │  customers    │  │
+│  │  orders       │◄─┼── App 1
+│  │  products     │◄─┼── App 2
+│  └───────────────┘  │◄─┼── App 3
+└─────────────────────┘</div>
+<ul><li>Concurrent access</li><li>Powerful queries</li><li>ACID transactions</li><li>Security &amp; roles</li><li>Relationships enforced</li></ul>
+</div></div>
+<div class="tip"><strong>Real Scale:</strong> Netflix stores 230M+ user records. Amazon manages billions of products. Your bank processes millions of transactions daily — all in databases.</div>
+`},
+{m:1,mt:"MODULE 1: DB Fundamentals",t:"Tables, Rows & Columns",h:`
+<div class="asc">                    CUSTOMERS TABLE
+ ┌──────┬───────────────┬──────────────────────┬──────────┐
+ │  id  │     name      │        email         │   city   │
+ ├──────┼───────────────┼──────────────────────┼──────────┤
+ │  1   │  Alice Smith  │  alice@example.com   │  NYC     │◄── ROW (one record)
+ │  2   │  Bob Jones    │  bob@example.com     │  LA      │
+ │  3   │  Carol Lee    │  carol@example.com   │  Chicago │
+ └──────┴───────────────┴──────────────────────┴──────────┘
+    ↑           ↑                  ↑                ↑
+ COLUMN      COLUMN             COLUMN           COLUMN
+(attribute) (attribute)       (attribute)      (attribute)</div>
+<div class="two">
+<div><h3>Table</h3><p>Represents one <em>entity</em> — a thing in your system. Examples: Customers, Products, Orders, Employees. Each table stores ONE type of thing.</p></div>
+<div><h3>Column (Field)</h3><p>An <em>attribute</em> of that entity. Has a data type: TEXT, INTEGER, REAL, DATE, BOOLEAN. All rows share the same columns.</p></div>
+</div>
+<div class="two">
+<div><h3>Row (Record / Tuple)</h3><p>One instance of the entity. Alice Smith is one customer. Order #1001 is one order.</p></div>
+<div><h3>Cell</h3><p>The intersection of a row and column. Contains one value. Can be NULL (unknown / missing).</p></div>
+</div>
+`},
+{m:1,mt:"MODULE 1: DB Fundamentals",t:"Primary Keys",h:`
+<h3>What is a Primary Key?</h3>
+<p>A column (or combination) that <strong>uniquely identifies every row</strong>. No two rows can have the same PK value. It can never be NULL.</p>
+<div class="asc"> EMPLOYEES TABLE
+ ┌──────┬────────────┬───────────┬────────┐
+ │  id  │ first_name │ last_name │ salary │
+ │ (PK) │            │           │        │
+ ├──────┼────────────┼───────────┼────────┤
+ │  1   │  John      │  Smith    │  70000 │
+ │  2   │  Jane      │  Doe      │  85000 │  ← id=2, unique forever
+ │  3   │  John      │  Smith    │  65000 │  ← same name as id=1, still unique!
+ └──────┴────────────┴───────────┴────────┘
+         ↑ names can repeat — id cannot</div>
+<div class="tip"><strong>Analogy:</strong> Your passport number. Unique worldwide. Never changes. Doesn't describe you, just identifies you.</div>
+<div class="two">
+<div><h3>Auto-increment PK</h3><div class="sql">-- PostgreSQL
+id SERIAL PRIMARY KEY
+-- or
+id INTEGER GENERATED ALWAYS AS IDENTITY
+
+-- MySQL
+id INT AUTO_INCREMENT PRIMARY KEY</div></div>
+<div><h3>UUID PK</h3><div class="sql">-- Better for distributed systems
+id UUID DEFAULT gen_random_uuid()
+   PRIMARY KEY
+
+-- Example value:
+-- 550e8400-e29b-41d4-a716</div></div>
+</div>
+<div class="iq"><strong>Interview Q:</strong> What's the difference between PRIMARY KEY and UNIQUE?<br><br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">PRIMARY KEY = UNIQUE + NOT NULL. A table can have only ONE primary key but multiple UNIQUE constraints. UNIQUE allows one NULL value (in most databases).</div></div>
+<div class="warn"><strong>⚠ Common Mistake:</strong> Don't use names, emails, or SSNs as PKs — they change! Always use a surrogate key (auto-increment id).</div>
+`},
+{m:1,mt:"MODULE 1: DB Fundamentals",t:"Foreign Keys & Relationships",h:`
+<h3>Foreign Key = Link Between Tables</h3>
+<p>A foreign key in one table <em>references the primary key</em> of another table. This enforces <strong>referential integrity</strong> — you can't have an order for a customer that doesn't exist.</p>
+<div class="asc">CUSTOMERS                        ORDERS
+┌──────┬───────────┐             ┌──────┬────────────┬─────────────┐
+│  id  │   name    │             │  id  │ order_date │ customer_id │
+│ (PK) │           │             │ (PK) │            │    (FK)     │
+├──────┼───────────┤             ├──────┼────────────┼─────────────┤
+│  1   │  Alice    │◄────────────│  101 │ 2024-01-05 │      1      │
+│  2   │  Bob      │◄────────────│  102 │ 2024-01-07 │      1      │
+│  3   │  Carol    │◄────────────│  103 │ 2024-02-01 │      2      │
+└──────┴───────────┘             └──────┴────────────┴─────────────┘
+       PK                                                FK → references customers.id</div>
+<div class="sql">CREATE TABLE orders (
+  id          INTEGER PRIMARY KEY,
+  customer_id INTEGER REFERENCES customers(id), -- FK
+  order_date  DATE,
+  total       REAL
+);</div>
+<div class="iq"><strong>Interview Q:</strong> What happens when you try to delete customer id=1 who has orders?<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><strong>RESTRICT (default):</strong> Error — delete blocked.<br><strong>CASCADE:</strong> Deletes the customer AND all their orders.<br><strong>SET NULL:</strong> Keeps orders but sets customer_id to NULL.<br>You choose the behavior with ON DELETE RESTRICT/CASCADE/SET NULL.</div></div>
+`},
+{m:1,mt:"MODULE 1: DB Fundamentals",t:"DBMS — The Software Layer",h:`
+<h3>What is a DBMS?</h3>
+<p>Database Management System — the software that sits between your app and the data. It handles storage, retrieval, security, concurrency, and backup.</p>
+<table class="tc"><thead><tr><th>DBMS</th><th>License</th><th>Best For</th><th>Used By</th></tr></thead><tbody>
+<tr><td><strong style="color:var(--acc)">PostgreSQL</strong></td><td>Open Source</td><td>Complex queries, JSON, full features</td><td>Instagram, Spotify, Twitch</td></tr>
+<tr><td><strong style="color:var(--acc)">MySQL</strong></td><td>Open Source</td><td>Web apps, fast reads, wide hosting support</td><td>Facebook, WordPress, Twitter</td></tr>
+<tr><td><strong style="color:var(--acc)">SQL Server</strong></td><td>Microsoft</td><td>Enterprise, .NET, Azure ecosystem</td><td>Banks, SAP, Microsoft shops</td></tr>
+<tr><td><strong style="color:var(--acc)">Oracle</strong></td><td>Commercial</td><td>Mission-critical, banking, government</td><td>Airlines, Banks, Government</td></tr>
+<tr><td><strong style="color:var(--acc)">SQLite</strong></td><td>Public Domain</td><td>Embedded, mobile, local storage</td><td>Every iPhone, Android, browser</td></tr>
+</tbody></table>
+<div class="tip"><strong>For this course:</strong> The IDE uses SQLite (runs in your browser). The SQL is 95% identical to PostgreSQL/MySQL. We'll note any differences.</div>
+`},
+{m:2,mt:"MODULE 2: DB Landscape",t:"Database Types Overview",h:`
+<div class="asc">What kind of data / workload?
+        │
+        ├─► Structured, relational?    ──────────► PostgreSQL / MySQL
+        │
+        ├─► Flexible JSON documents?  ──────────► MongoDB / CouchDB
+        │
+        ├─► Blazing-fast cache/sessions? ───────► Redis
+        │
+        ├─► Massive write throughput?  ──────────► Cassandra / HBase
+        │
+        ├─► Data IS the relationship?  ──────────► Neo4j (Graph)
+        │
+        ├─► Time-stamped metrics/IoT?  ──────────► InfluxDB / TimescaleDB
+        │
+        └─► Analytics / BI / Reports?  ──────────► Snowflake / BigQuery</div>
+<div class="tip"><strong>Key insight:</strong> Most real companies use 3–5 different databases. PostgreSQL for core data, Redis for cache, Snowflake for analytics, etc. The question is not "which one" but "which one for what."</div>
+`},
+{m:2,mt:"MODULE 2: DB Landscape",t:"Relational Databases Deep Dive",h:`
+<div class="two"><div>
+<h3>When to Use Relational</h3>
+<ul><li>Data is structured with clear schema</li><li>You need complex queries with joins</li><li>ACID transactions required (banking)</li><li>Data integrity matters (references)</li><li>Reporting &amp; analytics on the data</li></ul>
+</div><div>
+<h3>When NOT to Use</h3>
+<ul><li>Schema changes constantly (use MongoDB)</li><li>Storing billions of events/sec (use Cassandra)</li><li>Graph traversal is primary operation (Neo4j)</li><li>Need sub-millisecond cache (Redis)</li><li>Unstructured documents (MongoDB)</li></ul>
+</div></div>
+<table class="tc"><thead><tr><th>Feature</th><th>PostgreSQL</th><th>MySQL</th></tr></thead><tbody>
+<tr><td>JSON support</td><td>✅ Excellent (JSONB)</td><td>⚠ Basic</td></tr>
+<tr><td>Full-text search</td><td>✅ Built-in</td><td>⚠ Limited</td></tr>
+<tr><td>Window functions</td><td>✅ Full</td><td>✅ 8.0+</td></tr>
+<tr><td>Replication</td><td>✅ Streaming</td><td>✅ Binlog</td></tr>
+<tr><td>Cloud managed</td><td>✅ RDS/Supabase</td><td>✅ RDS/PlanetScale</td></tr>
+</tbody></table>
+`},
+{m:2,mt:"MODULE 2: DB Landscape",t:"NoSQL — MongoDB, Redis, Cassandra",h:`
+<h3>MongoDB — Document Store</h3>
+<p>Stores JSON-like documents. No fixed schema — each document can have different fields. Used by Uber, eBay, Forbes.</p>
+<div class="sql">// MongoDB document (not SQL)
+{ "_id": "abc123", "name": "Alice",
+  "address": { "city": "NYC", "zip": "10001" },
+  "tags": ["premium", "active"] }</div>
+<div class="tip"><strong>Use when:</strong> Schema evolves rapidly, documents are self-contained, you need flexible nested data.</div>
+<h3>Redis — Key-Value In-Memory</h3>
+<p>Stores data in RAM. Sub-millisecond reads/writes. Used for caching, sessions, rate-limiting, leaderboards. Used by Twitter, GitHub, Stack Overflow.</p>
+<div class="tip"><strong>Use when:</strong> You need a cache layer, session storage, or real-time leaderboards.</div>
+<h3>Cassandra — Column Store</h3>
+<p>Distributed, no single point of failure. Handles millions of writes/sec. Used by Netflix, Apple, Discord (trillions of messages).</p>
+<div class="tip"><strong>Use when:</strong> Massive write throughput, global distribution, time-series-like data, can tolerate eventual consistency.</div>
+`},
+{m:2,mt:"MODULE 2: DB Landscape",t:"OLTP vs OLAP",h:`
+<table class="tc"><thead><tr><th>Aspect</th><th>OLTP (Transactional)</th><th>OLAP (Analytical)</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>Run the business</td><td>Analyze the business</td></tr>
+<tr><td><strong>Operations</strong></td><td>INSERT/UPDATE/DELETE</td><td>Complex SELECT</td></tr>
+<tr><td><strong>Query size</strong></td><td>Touches few rows</td><td>Scans millions of rows</td></tr>
+<tr><td><strong>Response time</strong></td><td>Milliseconds</td><td>Seconds to minutes</td></tr>
+<tr><td><strong>Users</strong></td><td>Thousands concurrent</td><td>Dozens of analysts</td></tr>
+<tr><td><strong>Data age</strong></td><td>Current data</td><td>Historical data</td></tr>
+<tr><td><strong>Examples</strong></td><td>Your bank app, Amazon cart</td><td>Power BI, Tableau</td></tr>
+<tr><td><strong>Databases</strong></td><td>PostgreSQL, MySQL</td><td>Snowflake, BigQuery</td></tr>
+</tbody></table>
+<div class="iq"><strong>Interview Q:</strong> Why not just run analytics queries on your OLTP database?<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Analytical queries scan millions of rows and take minutes — they'd block your transactional users. That's why companies copy data to a separate data warehouse (ETL pipeline) for analytics.</div></div>
+`},
+{m:2,mt:"MODULE 2: DB Landscape",t:"Database Decision Guide",h:`
+<table class="tc"><thead><tr><th>What You're Building</th><th>Primary DB</th><th>Why</th></tr></thead><tbody>
+<tr><td>E-commerce (Amazon-style)</td><td>PostgreSQL</td><td>ACID, complex queries, inventory management</td></tr>
+<tr><td>Social Network (Facebook)</td><td>PostgreSQL + Neo4j</td><td>Relational data + graph relationships</td></tr>
+<tr><td>Real-time Chat (WhatsApp)</td><td>Cassandra + Redis</td><td>Massive writes + fast message retrieval</td></tr>
+<tr><td>Caching Layer</td><td>Redis</td><td>In-memory, sub-millisecond latency</td></tr>
+<tr><td>Analytics Platform</td><td>Snowflake / BigQuery</td><td>Columnar storage, SQL at scale</td></tr>
+<tr><td>IoT / Metrics</td><td>InfluxDB / TimescaleDB</td><td>Time-series optimized compression</td></tr>
+<tr><td>Flexible CMS/Blog</td><td>MongoDB</td><td>Schema changes frequently</td></tr>
+<tr><td>Banking System</td><td>PostgreSQL / Oracle</td><td>ACID compliance, regulatory requirements</td></tr>
+<tr><td>Netflix-style Streaming</td><td>Cassandra + PostgreSQL</td><td>Cassandra for viewing history, PG for accounts</td></tr>
+</tbody></table>
+`},
+{m:3,mt:"MODULE 3: SQL Basics",t:"SELECT — The Foundation",h:`
+<h3>Basic Syntax</h3>
+<div class="sql">-- Get every column from employees
+SELECT * FROM employees;
+
+-- Get specific columns (preferred in production)
+SELECT first_name, last_name, salary
+FROM employees;
+
+-- Calculate new column (doesn't modify the table)
+SELECT
+    first_name,
+    last_name,
+    salary,
+    salary * 12 AS annual_salary
+FROM employees;</div>
+<div class="tip"><strong>Tip:</strong> <code>SELECT *</code> is fine for learning. In production, name your columns — it's faster (less data transferred) and your query won't break if columns are added.</div>
+<h3>String Concatenation</h3>
+<div class="sql">-- PostgreSQL / SQLite
+SELECT first_name || ' ' || last_name AS full_name FROM employees;
+
+-- SQL Server / MySQL
+SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM employees;</div>
+<div class="iq"><strong>Interview Q:</strong> What does SELECT * mean and why avoid it in production?<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">* means "all columns". Avoid it because: 1) Fetches unneeded data → slower, 2) If a column is added/removed your app may break, 3) Prevents use of covering indexes.</div></div>
+`},
+{m:3,mt:"MODULE 3: SQL Basics",t:"WHERE — Filtering Rows",h:`
+<div class="sql">-- Filter by value
+SELECT * FROM employees WHERE department_id = 2;
+
+-- Comparison operators: =  !=  >  <  >=  <=
+SELECT first_name, salary
+FROM employees
+WHERE salary >= 70000;
+
+-- Multiple conditions
+SELECT * FROM products
+WHERE price < 100
+  AND category = 'Electronics';
+
+-- String comparison (case-sensitive in PostgreSQL)
+SELECT * FROM customers WHERE city = 'New York';</div>
+<div class="asc">employees (20 rows)         WHERE salary > 80000         Result (5 rows)
+┌────┬──────────┬────────┐  ──────────────────────►  ┌────┬──────────┬────────┐
+│ id │ name     │ salary │                           │ id │ name     │ salary │
+├────┼──────────┼────────┤                           ├────┼──────────┼────────┤
+│  1 │ Alice    │ 95000  │  ✓ passes                 │  1 │ Alice    │ 95000  │
+│  2 │ Bob      │ 65000  │  ✗ filtered out           │  3 │ Carol    │ 82000  │
+│  3 │ Carol    │ 82000  │  ✓ passes                 │ .. │ ...      │ ...    │
+│ .. │ ...      │ ...    │                           └────┴──────────┴────────┘</div>
+<div class="warn"><strong>⚠ Common mistake:</strong> You cannot use SELECT aliases in WHERE — WHERE runs before SELECT in the execution order!</div>
+`},
+{m:3,mt:"MODULE 3: SQL Basics",t:"ORDER BY, LIMIT & Aliases",h:`
+<div class="sql">-- Ascending (default)
+SELECT * FROM products ORDER BY price ASC;
+
+-- Descending
+SELECT * FROM products ORDER BY price DESC;
+
+-- Multiple sort columns: sort by dept first, then salary
+SELECT * FROM employees
+ORDER BY department_id ASC, salary DESC;
+
+-- Top 10 most expensive products
+SELECT name, price
+FROM products
+ORDER BY price DESC
+LIMIT 10;
+
+-- Pagination: page 3 (items 21-30)
+SELECT * FROM products
+ORDER BY id
+LIMIT 10 OFFSET 20;
+
+-- Aliases
+SELECT
+    first_name AS "First Name",
+    salary     AS monthly_pay,
+    salary * 12 AS annual_pay
+FROM employees;</div>
+<div class="tip"><strong>SQL Server:</strong> Uses <code>TOP 10</code> instead of <code>LIMIT 10</code>: <code>SELECT TOP 10 * FROM products ORDER BY price DESC</code></div>
+`},
+{m:3,mt:"MODULE 3: SQL Basics",t:"DISTINCT & Execution Order",h:`
+<div class="sql">-- Remove duplicate values
+SELECT DISTINCT city FROM customers;
+
+-- DISTINCT applies to ALL selected columns combined
+SELECT DISTINCT department_id, city FROM employees;
+-- Returns unique (dept, city) PAIRS — not unique depts alone
+
+-- Count unique values
+SELECT COUNT(DISTINCT city) AS unique_cities FROM customers;</div>
+<h3>SQL Execution Order — Critical!</h3>
+<div class="asc">You write:          Database executes:
+─────────────       ─────────────────────────────────────────
+1. SELECT           1. FROM / JOIN   ← load tables
+2. FROM             2. WHERE         ← filter rows
+3. WHERE            3. GROUP BY      ← group rows
+4. GROUP BY         4. HAVING        ← filter groups
+5. HAVING           5. SELECT        ← compute columns
+6. ORDER BY         6. DISTINCT      ← remove duplicates
+7. LIMIT            7. ORDER BY      ← sort results
+                    8. LIMIT/OFFSET  ← paginate</div>
+<div class="tip"><strong>Why this matters:</strong> You can't use a SELECT alias in WHERE (WHERE runs before SELECT). You CAN use it in ORDER BY (runs after). This trips up everyone at first.</div>
+<div class="iq"><strong>Interview Q:</strong> Why does this fail: <code>SELECT salary*12 AS annual FROM employees WHERE annual > 100000</code>?<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">WHERE runs before SELECT, so "annual" doesn't exist yet. Fix: <code>WHERE salary*12 > 100000</code> or use a subquery/CTE.</div></div>
+`},
+{m:3,mt:"MODULE 3: SQL Basics",t:"Practice — Module 3",h:`
+<p style="color:var(--mut);font-size:12px;margin-bottom:14px">Use the IDE tab to run these. The database has: employees, customers, products, orders, order_items, departments, accounts, transactions.</p>
+<div class="qb"><div class="qn">Q1 — BEGINNER</div><div class="qt">Get first_name, last_name, salary for employees earning over $80,000</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT first_name, last_name, salary
+FROM employees
+WHERE salary > 80000;</div></div></div>
+<div class="qb"><div class="qn">Q2 — BEGINNER</div><div class="qt">List all unique cities from the customers table, sorted alphabetically</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT DISTINCT city FROM customers ORDER BY city;</div></div></div>
+<div class="qb"><div class="qn">Q3 — BEGINNER</div><div class="qt">Show the top 5 most expensive products (name and price)</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT name, price FROM products ORDER BY price DESC LIMIT 5;</div></div></div>
+<div class="qb"><div class="qn">Q4 — INTERMEDIATE</div><div class="qt">Show each employee's full name and annual salary (salary×12), aliased as 'annual_salary'</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT first_name || ' ' || last_name AS full_name,
+       salary * 12 AS annual_salary
+FROM employees
+ORDER BY annual_salary DESC;</div></div></div>
+<div class="qb"><div class="qn">Q5 — INTERMEDIATE</div><div class="qt">Get page 2 of products (items 11-20), sorted by price ascending</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT * FROM products ORDER BY price ASC LIMIT 10 OFFSET 10;</div></div></div>
+`},
+{m:4,mt:"MODULE 4: Filtering",t:"AND, OR, NOT + IN + BETWEEN",h:`
+<div class="sql">-- AND: both must be true
+SELECT * FROM employees
+WHERE salary > 60000 AND department_id = 2;
+
+-- OR: either can be true
+SELECT * FROM employees
+WHERE department_id = 1 OR department_id = 2;
+
+-- NOT
+SELECT * FROM customers WHERE NOT country = 'USA';
+
+-- ⚠ AND has higher precedence than OR — use parentheses!
+-- Wrong:  WHERE a=1 OR b=2 AND c=3   (AND binds first)
+-- Right:  WHERE a=1 OR (b=2 AND c=3)
+
+-- IN: cleaner than multiple ORs
+SELECT * FROM employees WHERE department_id IN (1, 2, 3);
+SELECT * FROM products WHERE category NOT IN ('Clothing', 'Accessories');
+
+-- BETWEEN: inclusive on both ends
+SELECT * FROM products WHERE price BETWEEN 50 AND 200;
+-- Same as: price >= 50 AND price <= 200
+
+SELECT * FROM orders
+WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31';</div>
+`},
+{m:4,mt:"MODULE 4: Filtering",t:"LIKE, IS NULL & EXISTS",h:`
+<div class="sql">-- LIKE wildcards:  % = any chars,  _ = exactly one char
+SELECT * FROM customers WHERE name LIKE 'Al%';        -- starts with Al
+SELECT * FROM customers WHERE email LIKE '%@gmail.com'; -- Gmail users
+SELECT * FROM products WHERE name LIKE '%phone%';      -- contains phone
+SELECT * FROM employees WHERE first_name LIKE '_ob';   -- Bob, Rob, Job
+
+-- IS NULL (never use = NULL — it always returns nothing!)
+SELECT * FROM employees WHERE manager_id IS NULL;   -- top-level managers
+SELECT * FROM customers WHERE phone IS NOT NULL;
+
+-- COALESCE: substitute NULL with a default
+SELECT name, COALESCE(phone, 'No phone') AS phone FROM customers;
+
+-- EXISTS: true if subquery returns any rows
+SELECT * FROM customers c
+WHERE EXISTS (
+    SELECT 1 FROM orders o WHERE o.customer_id = c.id
+);
+
+-- NOT EXISTS: customers who never ordered
+SELECT * FROM customers c
+WHERE NOT EXISTS (
+    SELECT 1 FROM orders o WHERE o.customer_id = c.id
+);</div>
+<div class="warn"><strong>⚠ LIKE '%word%'</strong> (leading wildcard) cannot use an index — causes a full table scan on large tables!</div>
+<div class="warn"><strong>⚠ NEVER write</strong> <code>WHERE column = NULL</code> — SQL uses 3-value logic (TRUE/FALSE/UNKNOWN) and NULL = NULL is UNKNOWN (not TRUE).</div>
+`},
+{m:4,mt:"MODULE 4: Filtering",t:"Practice — Module 4",h:`
+<div class="qb"><div class="qn">Q1</div><div class="qt">Find all products priced between $20 and $100 in the Electronics category</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT * FROM products
+WHERE price BETWEEN 20 AND 100
+  AND category = 'Electronics';</div></div></div>
+<div class="qb"><div class="qn">Q2</div><div class="qt">Find customers from USA, UK, or Canada</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT * FROM customers
+WHERE country IN ('USA', 'UK', 'Canada');</div></div></div>
+<div class="qb"><div class="qn">Q3</div><div class="qt">Find employees whose first name starts with 'J' and salary > 70000</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT * FROM employees
+WHERE first_name LIKE 'J%' AND salary > 70000;</div></div></div>
+<div class="qb"><div class="qn">Q4</div><div class="qt">Find customers who have NOT placed any orders (use NOT EXISTS)</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT c.id, c.name FROM customers c
+WHERE NOT EXISTS (
+    SELECT 1 FROM orders o WHERE o.customer_id = c.id
+);</div></div></div>
+<div class="qb"><div class="qn">Q5</div><div class="qt">Find orders placed in 2024 with total_amount over 300</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT * FROM orders
+WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31'
+  AND total_amount > 300;</div></div></div>
+`},
+{m:5,mt:"MODULE 5: Data Manipulation",t:"INSERT, UPDATE, DELETE",h:`
+<div class="sql">-- INSERT single row (always name columns!)
+INSERT INTO employees (first_name, last_name, email, salary, department_id)
+VALUES ('Sarah', 'Connor', 'sarah@co.com', 85000, 2);
+
+-- INSERT multiple rows
+INSERT INTO products (name, category, price, stock_quantity) VALUES
+    ('iPhone 15',   'Electronics', 999.99, 100),
+    ('MacBook Pro', 'Electronics', 1999.99, 50),
+    ('Nike Shoes',  'Clothing',    89.99, 200);
+
+-- UPDATE: ALWAYS use WHERE!
+-- Safe pattern: SELECT first to verify, then UPDATE
+SELECT * FROM employees WHERE id = 5;         -- verify
+UPDATE employees SET salary = 95000 WHERE id = 5; -- then update
+
+-- Update multiple columns
+UPDATE employees
+SET salary = salary * 1.10, city = 'Remote'
+WHERE department_id = 2 AND hire_date < '2022-01-01';
+
+-- DELETE: ALWAYS use WHERE!
+DELETE FROM orders WHERE order_date < '2020-01-01';</div>
+<div class="warn"><strong>⚠ UPDATE / DELETE without WHERE</strong> affects EVERY row in the table. Always test with SELECT first.</div>
+<table class="tc"><thead><tr><th></th><th>DELETE</th><th>TRUNCATE</th><th>DROP</th></tr></thead><tbody>
+<tr><td>Removes</td><td>Specific rows</td><td>All rows</td><td>Entire table</td></tr>
+<tr><td>WHERE clause</td><td>✅ Yes</td><td>❌ No</td><td>❌ No</td></tr>
+<tr><td>Can rollback</td><td>✅ Yes</td><td>Varies</td><td>❌ No</td></tr>
+<tr><td>Keeps structure</td><td>✅ Yes</td><td>✅ Yes</td><td>❌ No</td></tr>
+<tr><td>Speed</td><td>Slow</td><td>Fast</td><td>Instant</td></tr>
+</tbody></table>
+`},
+{m:6,mt:"MODULE 6: JOINs",t:"Why JOINs? Mental Model",h:`
+<h3>The Core Problem</h3>
+<p>Data is split across tables (normalization). JOINs reunite related data for queries. The ON clause specifies how to match rows between tables.</p>
+<div class="asc">CUSTOMERS           ORDERS              JOINED RESULT
+┌────┬────────┐   ┌────┬─────────┬──────┐   ┌────┬────────┬────┬─────────┐
+│ id │  name  │   │ id │  date   │c_id  │   │c_id│  name  │ oid│  date   │
+├────┼────────┤   ├────┼─────────┼──────┤   ├────┼────────┼────┼─────────┤
+│  1 │ Alice  │   │101 │Jan 5    │  1   │──►│  1 │ Alice  │101 │ Jan 5   │
+│  2 │ Bob    │ + │102 │Jan 7    │  1   │──►│  1 │ Alice  │102 │ Jan 7   │
+│  3 │ Carol  │   │103 │Feb 1    │  2   │──►│  2 │ Bob    │103 │ Feb 1   │
+└────┴────────┘   └────┴─────────┴──────┘   └────┴────────┴────┴─────────┘
+                                             Carol has no orders → not shown (INNER JOIN)</div>
+<div class="tip"><strong>Key insight:</strong> The ON condition matches rows. For each order row, SQL finds the matching customer row where customers.id = orders.customer_id.</div>
+`},
+{m:6,mt:"MODULE 6: JOINs",t:"INNER, LEFT & RIGHT JOIN",h:`
+<div class="sql">-- INNER JOIN: only rows that match in BOTH tables
+SELECT c.name, o.id AS order_id, o.total_amount
+FROM customers c
+INNER JOIN orders o ON c.id = o.customer_id;
+-- Carol (no orders) is EXCLUDED
+
+-- LEFT JOIN: all rows from LEFT + matching from right
+-- Non-matching right side → NULL
+SELECT c.name, o.id AS order_id, o.total_amount
+FROM customers c
+LEFT JOIN orders o ON c.id = o.customer_id;
+-- Carol IS included, with NULL for order columns
+
+-- RIGHT JOIN: all rows from RIGHT + matching from left
+-- (Rarely used — just swap tables and use LEFT JOIN)
+SELECT c.name, o.id AS order_id
+FROM customers c
+RIGHT JOIN orders o ON c.id = o.customer_id;</div>
+<div class="asc">INNER JOIN          LEFT JOIN           FULL OUTER JOIN
+  ┌──┐ ┌──┐           ┌──┐ ┌──┐           ┌──┐ ┌──┐
+  │  ███  │           │██████  │           │██████████│
+  └──┘ └──┘           └──┘ └──┘           └──┘ └──┘
+  intersection       all left + match     everything</div>
+<div class="tip"><strong>Rule of thumb:</strong> Use LEFT JOIN as your default when you want to keep all rows from one table even if there's no match in the other.</div>
+`},
+{m:6,mt:"MODULE 6: JOINs",t:"SELF JOIN, CROSS JOIN & Multi-table",h:`
+<div class="sql">-- SELF JOIN: join a table to itself
+-- Classic: employee and their manager (same table)
+SELECT
+    e.first_name AS employee,
+    m.first_name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.id;
+
+-- CROSS JOIN: every row × every row (Cartesian product)
+-- Use: generate all combinations
+SELECT colors.name, sizes.label
+FROM colors CROSS JOIN sizes;
+-- 5 colors × 3 sizes = 15 rows
+
+-- MULTI-TABLE JOIN: chain as many as needed
+SELECT
+    c.name AS customer,
+    p.name AS product,
+    oi.quantity,
+    o.order_date
+FROM orders o
+JOIN customers c    ON o.customer_id  = c.id
+JOIN order_items oi ON o.id           = oi.order_id
+JOIN products p     ON oi.product_id  = p.id
+WHERE o.status = 'completed'
+ORDER BY o.order_date DESC;</div>
+<div class="iq"><strong>Interview Q:</strong> What's the difference between INNER JOIN and WHERE with two tables?<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Old style: <code>FROM a, b WHERE a.id = b.a_id</code> is equivalent to INNER JOIN. Modern explicit JOIN syntax is preferred — it's clearer and required for LEFT/RIGHT joins.</div></div>
+`},
+{m:6,mt:"MODULE 6: JOINs",t:"JOIN Practice (10 Questions)",h:`
+<div class="qb"><div class="qn">Q1 — BASIC</div><div class="qt">Get each order with the customer name (not just customer_id)</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT o.id, c.name, o.order_date, o.total_amount
+FROM orders o
+JOIN customers c ON o.customer_id = c.id;</div></div></div>
+<div class="qb"><div class="qn">Q2 — BASIC</div><div class="qt">List all employees and their department name (use departments table)</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT e.first_name, e.last_name, d.name AS department
+FROM employees e
+JOIN departments d ON e.department_id = d.id;</div></div></div>
+<div class="qb"><div class="qn">Q3 — INTERMEDIATE</div><div class="qt">Show ALL customers and how many orders each has (include customers with 0 orders)</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT c.name, COUNT(o.id) AS order_count
+FROM customers c
+LEFT JOIN orders o ON c.id = o.customer_id
+GROUP BY c.id, c.name
+ORDER BY order_count DESC;</div></div></div>
+<div class="qb"><div class="qn">Q4 — INTERMEDIATE</div><div class="qt">Get order details: customer name, product name, quantity, unit_price</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT c.name AS customer, p.name AS product,
+       oi.quantity, oi.unit_price
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id;</div></div></div>
+<div class="qb"><div class="qn">Q5 — ADVANCED</div><div class="qt">Show each employee's name and their manager's name (self join)</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT
+    e.first_name || ' ' || e.last_name AS employee,
+    m.first_name || ' ' || m.last_name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.id;</div></div></div>
+`},
+{m:7,mt:"MODULE 7: Aggregation",t:"COUNT, SUM, AVG, MIN, MAX",h:`
+<div class="sql">SELECT
+    COUNT(*)           AS total_rows,       -- all rows
+    COUNT(manager_id)  AS has_manager,      -- non-NULL only
+    COUNT(DISTINCT department_id) AS depts, -- unique values
+    SUM(salary)        AS total_payroll,
+    AVG(salary)        AS avg_salary,
+    MIN(salary)        AS lowest,
+    MAX(salary)        AS highest
+FROM employees;</div>
+<div class="tip"><strong>COUNT(*) vs COUNT(col):</strong> COUNT(*) counts all rows including NULLs. COUNT(col) skips NULL values in that column. This difference trips up many candidates!</div>
+<h3>GROUP BY — Aggregate Per Group</h3>
+<div class="sql">-- Summary per department
+SELECT
+    department_id,
+    COUNT(*)     AS headcount,
+    AVG(salary)  AS avg_salary,
+    MAX(salary)  AS top_salary,
+    SUM(salary)  AS payroll
+FROM employees
+GROUP BY department_id
+ORDER BY avg_salary DESC;</div>
+<div class="warn"><strong>⚠ Rule:</strong> Every column in SELECT must either be in GROUP BY or wrapped in an aggregate function. Violating this is the most common SQL error.</div>
+`},
+{m:7,mt:"MODULE 7: Aggregation",t:"HAVING & Analytics Examples",h:`
+<div class="sql">-- HAVING: filter AFTER grouping (WHERE filters BEFORE)
+SELECT department_id, AVG(salary) AS avg_sal
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) > 70000;  -- only depts with high avg
+
+-- Combined: WHERE filters rows, HAVING filters groups
+SELECT department_id, COUNT(*) AS cnt, AVG(salary) AS avg_sal
+FROM employees
+WHERE hire_date > '2020-01-01'  -- filter rows first
+GROUP BY department_id
+HAVING COUNT(*) >= 3;            -- then filter groups
+
+-- Business analytics: revenue by category
+SELECT
+    p.category,
+    COUNT(DISTINCT o.id)       AS orders,
+    SUM(oi.quantity)           AS units_sold,
+    SUM(oi.quantity*oi.unit_price) AS revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.id
+JOIN orders o   ON oi.order_id   = o.id
+GROUP BY p.category
+ORDER BY revenue DESC;</div>
+<div class="iq"><strong>Interview Q:</strong> When do you use HAVING vs WHERE?<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Use WHERE to filter individual rows before grouping. Use HAVING to filter groups after GROUP BY. You need HAVING when your filter uses an aggregate function (COUNT, SUM, AVG…).</div></div>
+`},
+{m:8,mt:"MODULE 8: Advanced SQL",t:"Subqueries & CTEs",h:`
+<div class="sql">-- Subquery in WHERE
+SELECT * FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+
+-- Subquery in FROM (derived table / inline view)
+SELECT dept, avg_sal
+FROM (
+    SELECT department_id AS dept, AVG(salary) AS avg_sal
+    FROM employees GROUP BY department_id
+) AS dept_stats
+WHERE avg_sal > 65000;
+
+-- CTE (WITH clause) — same result, much cleaner
+WITH dept_stats AS (
+    SELECT department_id, AVG(salary) AS avg_sal
+    FROM employees GROUP BY department_id
+),
+above_avg_depts AS (
+    SELECT e.*, d.avg_sal
+    FROM employees e
+    JOIN dept_stats d ON e.department_id = d.department_id
+    WHERE e.salary > d.avg_sal
+)
+SELECT * FROM above_avg_depts ORDER BY salary DESC;</div>
+<div class="tip"><strong>CTE vs Subquery:</strong> Both produce the same result. CTEs are more readable, can be reused multiple times in the query, and are easier to debug step by step.</div>
+`},
+{m:8,mt:"MODULE 8: Advanced SQL",t:"Views, Correlated Subqueries",h:`
+<div class="sql">-- Correlated subquery: references outer query row-by-row
+-- Find employees earning more than their dept average
+SELECT e.first_name, e.salary, e.department_id
+FROM employees e
+WHERE e.salary > (
+    SELECT AVG(salary) FROM employees
+    WHERE department_id = e.department_id  -- ← references outer
+);
+
+-- CREATE VIEW: saved query, used like a table
+CREATE VIEW high_value_customers AS
+SELECT
+    c.id, c.name, c.email,
+    COUNT(o.id)     AS order_count,
+    SUM(o.total_amount) AS lifetime_value
+FROM customers c
+JOIN orders o ON c.id = o.customer_id
+GROUP BY c.id, c.name, c.email
+HAVING SUM(o.total_amount) > 500;
+
+-- Use it like a table
+SELECT * FROM high_value_customers ORDER BY lifetime_value DESC;
+
+-- Recursive CTE: traverse hierarchies
+WITH RECURSIVE org AS (
+    SELECT id, first_name, manager_id, 1 AS lvl
+    FROM employees WHERE manager_id IS NULL   -- base: CEO
+    UNION ALL
+    SELECT e.id, e.first_name, e.manager_id, o.lvl+1
+    FROM employees e JOIN org o ON e.manager_id = o.id
+)
+SELECT * FROM org ORDER BY lvl;</div>
+`},
+{m:9,mt:"MODULE 9: Window Functions",t:"Window Functions Intro",h:`
+<h3>What Makes Them Special?</h3>
+<p>Window functions perform calculations <em>across related rows</em> without collapsing them like GROUP BY does. Each row keeps its identity and gains a calculated value.</p>
+<div class="sql">-- Syntax: FUNCTION() OVER (PARTITION BY ... ORDER BY ... frame)
+
+-- Compare each employee's salary to company average
+SELECT
+    first_name,
+    salary,
+    AVG(salary) OVER () AS company_avg,         -- all rows
+    AVG(salary) OVER (PARTITION BY department_id) AS dept_avg, -- per dept
+    salary - AVG(salary) OVER (PARTITION BY department_id) AS vs_dept_avg
+FROM employees;
+-- Unlike GROUP BY, all 20 employee rows are still shown</div>
+<div class="tip"><strong>Key difference:</strong> GROUP BY collapses rows (20 employees → 5 dept rows). Window functions annotate rows (20 employees → still 20 rows, but with extra calculated columns).</div>
+`},
+{m:9,mt:"MODULE 9: Window Functions",t:"ROW_NUMBER, RANK, DENSE_RANK",h:`
+<div class="sql">SELECT
+    first_name, department_id, salary,
+    ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS row_num,
+    RANK()       OVER (PARTITION BY department_id ORDER BY salary DESC) AS rnk,
+    DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS dense_rnk
+FROM employees;</div>
+<div class="asc">When two employees TIE at $90,000:
+
+name      salary   ROW_NUMBER   RANK   DENSE_RANK
+────────  ───────  ──────────   ────   ──────────
+Alice      90000       1          1        1
+Bob        90000       2          1        1      ← tie handled differently
+Carol      75000       3          3        2      ← RANK skips 2, DENSE_RANK doesn't
+Dave       65000       4          4        3</div>
+<div class="tip"><strong>Use DENSE_RANK</strong> when you don't want gaps (leaderboards, percentiles). <strong>Use ROW_NUMBER</strong> for pagination (each row gets unique number).</div>
+<h3>Get Top N Per Group</h3>
+<div class="sql">-- Top 2 earners per department
+SELECT * FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rn
+    FROM employees
+) ranked
+WHERE rn <= 2;</div>
+`},
+{m:9,mt:"MODULE 9: Window Functions",t:"LAG, LEAD, Running Totals",h:`
+<div class="sql">-- LAG: access previous row's value
+-- LEAD: access next row's value
+SELECT
+    order_date,
+    total_amount,
+    LAG(total_amount)  OVER (ORDER BY order_date) AS prev_amount,
+    LEAD(total_amount) OVER (ORDER BY order_date) AS next_amount,
+    total_amount - LAG(total_amount) OVER (ORDER BY order_date) AS change
+FROM orders;
+
+-- Running total (cumulative sum)
+SELECT
+    order_date,
+    total_amount,
+    SUM(total_amount) OVER (ORDER BY order_date) AS running_total
+FROM orders;
+
+-- 7-day rolling average
+SELECT
+    order_date,
+    total_amount,
+    AVG(total_amount) OVER (
+        ORDER BY order_date
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS rolling_7day_avg
+FROM orders;</div>
+<div class="iq"><strong>FAANG Q:</strong> Write a query to find the month-over-month revenue growth %.<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">WITH monthly AS (
+  SELECT strftime('%Y-%m', order_date) AS month,
+         SUM(total_amount) AS revenue
+  FROM orders GROUP BY 1
+)
+SELECT month, revenue,
+  LAG(revenue) OVER (ORDER BY month) AS prev_month,
+  ROUND((revenue - LAG(revenue) OVER (ORDER BY month))
+        / LAG(revenue) OVER (ORDER BY month) * 100, 1) AS growth_pct
+FROM monthly;</div></div></div>
+`},
+{m:10,mt:"MODULE 10: DB Design",t:"Normalization — 1NF, 2NF, 3NF",h:`
+<div class="two"><div>
+<h3>❌ Bad — Unnormalized</h3>
+<div class="asc">order_id | customer | products
+─────────────────────────────────
+1001     | Alice    | Phone, Case
+1002     | Bob      | Laptop, Mouse, Pad</div>
+<p>Problems: Can't query individual products, hard to update, duplicate customer info</p>
+</div><div>
+<h3>✅ Good — Normalized</h3>
+<div class="asc">orders          order_items
+─────────────   ────────────────────
+id | customer   id | order_id | product
+1001 | Alice    1  |   1001   | Phone
+1002 | Bob      2  |   1001   | Case
+                3  |   1002   | Laptop</div>
+</div></div>
+<table class="tc"><thead><tr><th>Form</th><th>Rule</th><th>Fixes</th></tr></thead><tbody>
+<tr><td><strong>1NF</strong></td><td>Atomic values, no repeating groups</td><td>No "Phone, Case" in one cell</td></tr>
+<tr><td><strong>2NF</strong></td><td>1NF + no partial dependencies on composite PK</td><td>ProductName depends on ProductID only, not (OrderID, ProductID)</td></tr>
+<tr><td><strong>3NF</strong></td><td>2NF + no transitive dependencies</td><td>City shouldn't depend on ZipCode which depends on OrderID</td></tr>
+<tr><td><strong>BCNF</strong></td><td>Every determinant is a candidate key</td><td>Stricter than 3NF, rarely needed in practice</td></tr>
+</tbody></table>
+<div class="tip"><strong>Practical advice:</strong> Design to 3NF. Denormalize intentionally for performance where needed (data warehouses, reporting tables, caching).</div>
+`},
+{m:10,mt:"MODULE 10: DB Design",t:"Relationships & ER Diagrams",h:`
+<div class="asc">ONE-TO-ONE (1:1)             ONE-TO-MANY (1:N)
+users ──────── user_profiles   customers ──────── orders
+(one user = one profile)       (one customer, many orders)
+FK: profiles.user_id           FK: orders.customer_id
+
+MANY-TO-MANY (M:N)
+  students ────── enrollments ────── courses
+  (requires junction table)
+  enrollments: student_id (FK), course_id (FK), enrolled_date</div>
+<h3>E-commerce Schema Design</h3>
+<div class="asc">users(id, email, name, created_at)
+     │
+     ├── addresses(id, user_id, street, city, country)
+     │
+     └── orders(id, user_id, address_id, status, total, created_at)
+              │
+              └── order_items(id, order_id, product_id, qty, price)
+                                              │
+products(id, name, price, stock)─────────────┘
+     │
+     └── product_categories(product_id, category_id)
+                                    │
+     categories(id, name, parent_id)┘  ← self-referencing for hierarchy</div>
+`},
+{m:11,mt:"MODULE 11: Transactions",t:"ACID & Transaction Syntax",h:`
+<div class="two"><div>
+<h3>ACID Properties</h3>
+<ul>
+<li><strong style="color:var(--acc)">Atomicity</strong> — All or nothing. Transfer $500: both debit and credit happen, or neither does.</li>
+<li><strong style="color:var(--acc)">Consistency</strong> — DB moves between valid states. Total money before = total money after transfer.</li>
+<li><strong style="color:var(--acc)">Isolation</strong> — Concurrent transactions don't interfere. Two transfers happening simultaneously see correct balances.</li>
+<li><strong style="color:var(--acc)">Durability</strong> — Committed data survives crashes. Power cut after COMMIT? Data is safe.</li>
+</ul>
+</div><div>
+<h3>Transaction Syntax</h3>
+<div class="sql">BEGIN;
+
+UPDATE accounts
+SET balance = balance - 500
+WHERE id = 1001;
+
+UPDATE accounts
+SET balance = balance + 500
+WHERE id = 1002;
+
+-- If both succeed:
+COMMIT;
+
+-- If anything fails:
+ROLLBACK;
+
+-- Partial rollback
+SAVEPOINT before_transfer;
+-- ... work ...
+ROLLBACK TO SAVEPOINT before_transfer;</div>
+</div></div>
+`},
+{m:11,mt:"MODULE 11: Transactions",t:"Isolation Levels",h:`
+<table class="tc"><thead><tr><th>Level</th><th>Dirty Read</th><th>Non-Repeatable</th><th>Phantom</th><th>Use When</th></tr></thead><tbody>
+<tr><td>READ UNCOMMITTED</td><td>⚠ Yes</td><td>⚠ Yes</td><td>⚠ Yes</td><td>Almost never — reporting only</td></tr>
+<tr><td><strong>READ COMMITTED</strong></td><td>✅ No</td><td>⚠ Yes</td><td>⚠ Yes</td><td>Default in PostgreSQL, Oracle</td></tr>
+<tr><td>REPEATABLE READ</td><td>✅ No</td><td>✅ No</td><td>⚠ Yes</td><td>Default in MySQL</td></tr>
+<tr><td>SERIALIZABLE</td><td>✅ No</td><td>✅ No</td><td>✅ No</td><td>Financial, highest consistency</td></tr>
+</tbody></table>
+<div class="tip"><strong>Trade-off:</strong> Higher isolation = more consistency but lower concurrency (more locking). Most apps use READ COMMITTED.</div>
+<div class="sql">-- Set isolation level
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+BEGIN;
+-- ... your queries ...
+COMMIT;</div>
+<div class="iq"><strong>Interview Q:</strong> What is a dirty read?<br><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Reading data that another transaction has modified but not yet committed. The data might get rolled back, so you've read "dirty" (potentially invalid) data. READ COMMITTED isolation prevents this.</div></div>
+`},
+{m:12,mt:"MODULE 12: Indexing & Performance",t:"How Indexes Work",h:`
+<h3>The Problem: Full Table Scan</h3>
+<div class="asc">SELECT * FROM employees WHERE email = 'alice@co.com';
+No index → scan ALL 10,000,000 rows one by one → 8 seconds
+With index → jump directly to matching rows  → 1 millisecond</div>
+<h3>B-Tree Index Structure</h3>
+<div class="asc">                    [M]
+                   /   \
+              [E-J]     [N-Z]
+             /  |  \     |   \
+          [E] [G][J]  [N]  [S-Z]
+          ...leaf nodes point to actual table rows...</div>
+<div class="sql">-- Create index
+CREATE INDEX idx_employees_email ON employees(email);
+CREATE INDEX idx_orders_customer ON orders(customer_id);
+CREATE INDEX idx_orders_date     ON orders(order_date);
+
+-- Composite index (column order matters!)
+CREATE INDEX idx_emp_dept_sal ON employees(department_id, salary);
+-- Helps: WHERE department_id = 2
+-- Helps: WHERE department_id = 2 AND salary > 70000
+-- Does NOT help: WHERE salary > 70000 alone (skips leading column)
+
+-- Drop index
+DROP INDEX idx_employees_email;</div>
+<div class="tip"><strong>Index trade-off:</strong> Indexes speed up reads but slow down writes (INSERT/UPDATE/DELETE must maintain the index). Don't index every column — index the columns used in WHERE, JOIN ON, and ORDER BY.</div>
+`},
+{m:12,mt:"MODULE 12: Indexing & Performance",t:"Query Optimization",h:`
+<h3>Top Optimization Rules</h3>
+<table class="tc"><thead><tr><th>#</th><th>Rule</th><th>Why</th></tr></thead><tbody>
+<tr><td>1</td><td>Avoid functions on indexed columns in WHERE</td><td>Prevents index use</td></tr>
+<tr><td>2</td><td>Use LIKE 'word%' not LIKE '%word'</td><td>Leading wildcard can't use index</td></tr>
+<tr><td>3</td><td>Use EXISTS instead of COUNT(*) > 0</td><td>EXISTS stops at first match</td></tr>
+<tr><td>4</td><td>Select only needed columns, not SELECT *</td><td>Less data transferred</td></tr>
+<tr><td>5</td><td>Use LIMIT when you don't need all rows</td><td>Stop early</td></tr>
+<tr><td>6</td><td>JOINs usually faster than correlated subqueries</td><td>Optimizer handles joins better</td></tr>
+</tbody></table>
+<div class="sql">-- BAD: function on indexed column
+WHERE YEAR(hire_date) = 2024               -- can't use index on hire_date
+
+-- GOOD: sargable predicate
+WHERE hire_date BETWEEN '2024-01-01' AND '2024-12-31'  -- uses index
+
+-- BAD: correlated subquery (runs once per row)
+WHERE salary > (SELECT AVG(salary) FROM employees WHERE department_id = e.department_id)
+
+-- GOOD: CTE or JOIN (runs once total)
+WITH dept_avg AS (SELECT department_id, AVG(salary) avg FROM employees GROUP BY 1)
+SELECT e.* FROM employees e JOIN dept_avg d ON e.department_id = d.department_id
+WHERE e.salary > d.avg</div>
+`},
+{m:13,mt:"MODULE 13: Interview Prep",t:"25 Beginner Interview Questions",h:`
+<div class="qb"><div class="qn">Q1</div><div class="qt">What is the difference between DELETE and TRUNCATE?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">DELETE removes specific rows, can be rolled back, fires triggers, is slow. TRUNCATE removes ALL rows, is faster, can't easily be rolled back, doesn't fire row-level triggers. TRUNCATE also resets auto-increment counters.</div></div>
+<div class="qb"><div class="qn">Q2</div><div class="qt">What is a NULL value?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">NULL means unknown or missing data — it's not zero, not empty string, not false. NULL is not equal to anything, not even itself (NULL = NULL is UNKNOWN). Always use IS NULL / IS NOT NULL to check for it.</div></div>
+<div class="qb"><div class="qn">Q3</div><div class="qt">What is the difference between WHERE and HAVING?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">WHERE filters individual rows before grouping. HAVING filters groups after GROUP BY. You must use HAVING (not WHERE) when filtering on aggregate values like COUNT(*) or SUM(salary).</div></div>
+<div class="qb"><div class="qn">Q4</div><div class="qt">What are the different types of JOINs?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">INNER JOIN (matching rows only), LEFT JOIN (all left + matching right), RIGHT JOIN (all right + matching left), FULL OUTER JOIN (all from both), CROSS JOIN (Cartesian product), SELF JOIN (table joined to itself).</div></div>
+<div class="qb"><div class="qn">Q5</div><div class="qt">What is a primary key?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">A column (or combination) that uniquely identifies each row. It must be UNIQUE and NOT NULL. A table can only have one primary key. Usually an auto-increment integer or UUID.</div></div>
+<div class="qb"><div class="qn">Q6</div><div class="qt">What is a foreign key?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">A column that references the primary key of another table, creating a link between tables. Enforces referential integrity — you can't have an order for a non-existent customer.</div></div>
+<div class="qb"><div class="qn">Q7</div><div class="qt">What is the difference between UNION and UNION ALL?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">UNION removes duplicate rows from the combined result. UNION ALL keeps all rows including duplicates and is faster. Use UNION ALL when you know there are no duplicates or don't care about them.</div></div>
+<div class="qb"><div class="qn">Q8</div><div class="qt">What is an index and why is it useful?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">A data structure (usually B-Tree) that lets the database find rows quickly without scanning the entire table. Like a book's index — jump to the page instead of reading the whole book. Trade-off: faster reads, slower writes.</div></div>
+<div class="qb"><div class="qn">Q9</div><div class="qt">What does DISTINCT do?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Removes duplicate rows from the result. DISTINCT applies to the COMBINATION of all selected columns, not just one column.</div></div>
+<div class="qb"><div class="qn">Q10</div><div class="qt">What are aggregate functions? Give examples.</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Functions that compute a single result from a set of rows: COUNT (count rows), SUM (total), AVG (average), MIN (smallest), MAX (largest). Used with GROUP BY to aggregate per group.</div></div>
+`},
+{m:13,mt:"MODULE 13: Interview Prep",t:"25 Intermediate Questions",h:`
+<div class="qb"><div class="qn">Q1</div><div class="qt">What is a CTE and when would you use it over a subquery?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">CTE (WITH clause) is a named temporary result set. Use CTE when: (1) you need to reference the result more than once, (2) the query has complex nested subqueries hurting readability, (3) you need recursive queries. CTEs and subqueries have same performance in most cases.</div></div>
+<div class="qb"><div class="qn">Q2</div><div class="qt">What is a window function? How is it different from GROUP BY?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Window functions compute values across a "window" of rows related to the current row, without collapsing them. GROUP BY collapses 20 rows into 5 groups. Window functions annotate all 20 rows with per-group calculations.</div></div>
+<div class="qb"><div class="qn">Q3</div><div class="qt">Write a query to find the second highest salary.</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">-- Method 1: subquery
+SELECT MAX(salary) FROM employees
+WHERE salary < (SELECT MAX(salary) FROM employees);
+
+-- Method 2: window function (better, generalizes to Nth)
+SELECT salary FROM (
+  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+  FROM employees
+) r WHERE rnk = 2 LIMIT 1;</div></div></div>
+<div class="qb"><div class="qn">Q4</div><div class="qt">What is the difference between RANK() and DENSE_RANK()?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">When there are ties, RANK() leaves gaps (1,1,3,4) and DENSE_RANK() doesn't (1,1,2,3). Use DENSE_RANK() for leaderboards where you want "1st, 2nd, 3rd" with no skips.</div></div>
+<div class="qb"><div class="qn">Q5</div><div class="qt">What is normalization? What is the difference between 2NF and 3NF?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Normalization organizes data to reduce redundancy. 2NF: no partial dependencies (non-key column depends on full composite PK, not just part of it). 3NF: no transitive dependencies (non-key column depends on another non-key column).</div></div>
+<div class="qb"><div class="qn">Q6</div><div class="qt">What are ACID properties?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">Atomicity (all or nothing), Consistency (valid state before and after), Isolation (concurrent transactions don't interfere), Durability (committed data survives crashes). These guarantee reliable database transactions.</div></div>
+<div class="qb"><div class="qn">Q7</div><div class="qt">How do you find duplicate rows in a table?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT email, COUNT(*) AS cnt
+FROM customers
+GROUP BY email
+HAVING COUNT(*) > 1;</div></div></div>
+<div class="qb"><div class="qn">Q8</div><div class="qt">What is the difference between a view and a materialized view?</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd">A view is a virtual table — it runs the underlying query every time you query it. A materialized view stores the result physically on disk. Materialized views are faster for complex queries but need to be refreshed when underlying data changes.</div></div>
+`},
+{m:13,mt:"MODULE 13: Interview Prep",t:"Advanced & FAANG Questions",h:`
+<div class="qb"><div class="qn">FAANG Q1</div><div class="qt">Given a table of user logins (user_id, login_date), find users who logged in on 3 consecutive days.</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">WITH dated AS (
+  SELECT user_id, login_date,
+    JULIANDAY(login_date) - ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date) AS grp
+  FROM logins
+),
+consec AS (
+  SELECT user_id, grp, COUNT(*) AS streak FROM dated GROUP BY 1,2
+)
+SELECT DISTINCT user_id FROM consec WHERE streak >= 3;</div></div></div>
+<div class="qb"><div class="qn">FAANG Q2</div><div class="qt">Write a query to find customers who bought product A but NOT product B.</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT DISTINCT o.customer_id
+FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id
+WHERE p.name = 'Product A'
+
+EXCEPT
+
+SELECT DISTINCT o.customer_id
+FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+JOIN products p ON oi.product_id = p.id
+WHERE p.name = 'Product B';</div></div></div>
+<div class="qb"><div class="qn">FAANG Q3</div><div class="qt">Calculate a 7-day rolling average of daily revenue.</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT
+  order_date,
+  SUM(total_amount) AS daily_rev,
+  AVG(SUM(total_amount)) OVER (
+    ORDER BY order_date
+    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+  ) AS rolling_7day
+FROM orders
+GROUP BY order_date
+ORDER BY order_date;</div></div></div>
+<div class="qb"><div class="qn">FAANG Q4</div><div class="qt">Write a query to get the top 3 products by revenue in each category.</div><button class="sab" onclick="tog(this)">Show Answer</button><div class="ansd"><div class="sql">SELECT * FROM (
+  SELECT
+    p.category, p.name,
+    SUM(oi.quantity * oi.unit_price) AS revenue,
+    RANK() OVER (PARTITION BY p.category ORDER BY SUM(oi.quantity*oi.unit_price) DESC) AS rnk
+  FROM products p
+  JOIN order_items oi ON p.id = oi.product_id
+  GROUP BY p.category, p.id, p.name
+) r
+WHERE rnk <= 3;</div></div></div>
+`},
+{m:14,mt:"MODULE 14: Projects",t:"Netflix Database Schema",h:`
+<div class="sql">-- Core tables
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  plan TEXT CHECK(plan IN ('basic','standard','premium')),
+  country TEXT, created_at DATE
+);
+CREATE TABLE content (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL, type TEXT, -- movie/series
+  genre TEXT, release_year INTEGER, rating TEXT, duration_min INTEGER
+);
+CREATE TABLE viewing_history (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  content_id INTEGER REFERENCES content(id),
+  watched_at TIMESTAMP, watch_pct REAL -- 0-100
+);
+
+-- Analytics queries
+-- Top 10 most watched content this month
+SELECT c.title, COUNT(*) AS views, AVG(vh.watch_pct) AS avg_completion
+FROM viewing_history vh JOIN content c ON vh.content_id = c.id
+WHERE vh.watched_at >= DATE('now', '-30 days')
+GROUP BY c.id, c.title ORDER BY views DESC LIMIT 10;
+
+-- Users who haven't watched anything in 30 days (churn risk)
+SELECT u.email, MAX(vh.watched_at) AS last_watch
+FROM users u LEFT JOIN viewing_history vh ON u.id = vh.user_id
+GROUP BY u.id, u.email
+HAVING MAX(vh.watched_at) < DATE('now', '-30 days') OR MAX(vh.watched_at) IS NULL;</div>
+`},
+{m:14,mt:"MODULE 14: Projects",t:"SQL Cheatsheet & Roadmap",h:`
+<table class="tc"><thead><tr><th>Command</th><th>Purpose</th><th>Key Syntax</th></tr></thead><tbody>
+<tr><td>SELECT</td><td>Retrieve data</td><td>SELECT cols FROM tbl WHERE ... ORDER BY ... LIMIT n</td></tr>
+<tr><td>JOIN</td><td>Combine tables</td><td>... JOIN tbl2 ON tbl1.id = tbl2.fk</td></tr>
+<tr><td>GROUP BY</td><td>Aggregate per group</td><td>SELECT col, COUNT(*) FROM t GROUP BY col HAVING ...</td></tr>
+<tr><td>CTE</td><td>Named temp result</td><td>WITH name AS (SELECT ...) SELECT * FROM name</td></tr>
+<tr><td>Window</td><td>Rank/running totals</td><td>FUNC() OVER (PARTITION BY ... ORDER BY ...)</td></tr>
+<tr><td>INSERT</td><td>Add rows</td><td>INSERT INTO t (cols) VALUES (...)</td></tr>
+<tr><td>UPDATE</td><td>Modify rows</td><td>UPDATE t SET col=val WHERE ...</td></tr>
+<tr><td>DELETE</td><td>Remove rows</td><td>DELETE FROM t WHERE ...</td></tr>
+<tr><td>INDEX</td><td>Speed up queries</td><td>CREATE INDEX idx_name ON t(col)</td></tr>
+<tr><td>VIEW</td><td>Saved query</td><td>CREATE VIEW name AS SELECT ...</td></tr>
+</tbody></table>
+<h3>Learning Roadmap</h3>
+<div class="asc">BEGINNER          JUNIOR            MID-LEVEL         SENIOR
+─────────────     ─────────────     ─────────────     ─────────────
+SELECT/WHERE      JOINs             Window Functions  Query tuning
+ORDER BY          Aggregation       CTEs/Subqueries   Index design
+INSERT/UPDATE     GROUP BY/HAVING   Stored Procs      Execution plans
+Basic filtering   Normalization     Transactions      Partitioning
+                  Schema design     Performance       Replication
+                                    DB design         Sharding</div>
+`}
+// SLIDES_END
+];
+
+// ── NAVIGATION ──────────────────────────────────────────────────────────────
+let cur=0,sbVis=true;
+function tog(btn){const d=btn.nextElementSibling;d.style.display=d.style.display==='block'?'none':'block';}
+function hl(code){
+  const kws=['SELECT','FROM','WHERE','JOIN','INNER JOIN','LEFT JOIN','RIGHT JOIN','FULL OUTER JOIN','ON','GROUP BY','ORDER BY','HAVING','LIMIT','OFFSET','INSERT INTO','INSERT','INTO','VALUES','UPDATE','SET','DELETE','TRUNCATE','CREATE','TABLE','INDEX','VIEW','DROP','ALTER','AND','OR','NOT','IN','BETWEEN','LIKE','IS NULL','IS NOT NULL','IS','NULL','AS','DISTINCT','COUNT','SUM','AVG','MIN','MAX','WITH','RECURSIVE','UNION ALL','UNION','ALL','CASE','WHEN','THEN','ELSE','END','BEGIN','COMMIT','ROLLBACK','TRANSACTION','SAVEPOINT','OVER','PARTITION BY','ROW_NUMBER','RANK','DENSE_RANK','NTILE','LAG','LEAD','FIRST_VALUE','LAST_VALUE','EXPLAIN','EXISTS','NOT EXISTS','COALESCE','NULLIF','CAST','MERGE','USING','ASC','DESC','PRIMARY KEY','FOREIGN KEY','REFERENCES','UNIQUE','DEFAULT','NOT NULL','INTEGER','INT','TEXT','VARCHAR','REAL','DECIMAL','DATE','BOOLEAN','CURRENT_DATE','JULIANDAY','ROUND','CONCAT','STRFTIME','TRUE','FALSE'];
+  let r=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  r=r.replace(/(--[^\n]*)/g,'<span class="cmt">$1</span>');
+  r=r.replace(/'([^']*)'/g,"<span class='str'>'$1'</span>");
+  r=r.replace(/\b(\d+\.?\d*)\b/g,'<span class="num">$1</span>');
+  kws.sort((a,b)=>b.length-a.length).forEach(k=>{
+    try{r=r.replace(new RegExp('(?<![a-zA-Z>])('+k.replace(/\s+/g,'\\s+')+'|'+k.replace(/\s+/g,'\\s+').toLowerCase()+'|'+k.charAt(0)+k.slice(1).toLowerCase()+')(?![a-zA-Z<])','g'),'<span class="kw">$1</span>');}catch(e){}
+  });
+  return r;
+}
+function renderSlide(i){
+  const s=slides[i];if(!s)return;
+  const w=document.getElementById('sw');
+  w.innerHTML=`<div class="mbadge">${s.mt}</div><div class="stitle">${s.t}</div>${s.h}`;
+  w.querySelectorAll('.sql').forEach(el=>{el.innerHTML=hl(el.textContent);});
+  const pct=((i+1)/slides.length*100).toFixed(1);
+  document.getElementById('pb').style.width=pct+'%';
+  document.getElementById('sctr').textContent=`${i+1} / ${slides.length}`;
+  document.getElementById('stm').textContent=s.t;
+  document.getElementById('smm').textContent=s.mt;
+  document.getElementById('pbtn').disabled=i===0;
+  document.getElementById('nxbtn').disabled=i===slides.length-1;
+  trackMod(s.mt);
+  renderMNav();
+  w.scrollTop=0;
+  localStorage.setItem('sqlSlide',i);
+}
+function goTo(i){cur=Math.max(0,Math.min(slides.length-1,i));renderSlide(cur);}
+function nextS(){goTo(cur+1);}function prevS(){goTo(cur-1);}
+function toggleSB(){sbVis=!sbVis;document.getElementById('sidebar').classList.toggle('hide',!sbVis);}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')nextS();
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevS();
+});
+function renderMNav(){
+  const mods=[...new Set(slides.map(s=>s.mt))];
+  document.getElementById('mnav').innerHTML=mods.map(m=>{
+    const fi=slides.findIndex(s=>s.mt===m);
+    const on=slides[cur]&&slides[cur].mt===m;
+    return`<div class="mi ${on?'on':''}" onclick="goTo(${fi})"><span class="mn">${m.split(':')[0]}</span>${m.split(':').slice(1).join(':').trim()}</div>`;
+  }).join('');
+}
+function showTab(t){
+  ['course','ide','asn','sts'].forEach(x=>{
+    const p=document.getElementById(x==='course'?'cp':x+'p');
+    const tb=document.getElementById('tab-'+x);
+    if(p)p.style.display='none';
+    if(p)p.classList&&p.classList.remove('on');
+    if(tb)tb.classList.remove('on');
+  });
+  const ap=document.getElementById(t==='course'?'cp':t+'p');
+  if(ap){ap.style.display='flex';ap.classList&&ap.classList.add('on');}
+  const at=document.getElementById('tab-'+t);
+  if(at)at.classList.add('on');
+  document.getElementById('bnav').style.display=t==='course'?'flex':'none';
+  if(t==='sts')renderStats();
+  if(t==='asn')renderAList('all');
+}
+
+// ── TIMER ────────────────────────────────────────────────────────────────────
+let ss=parseInt(localStorage.getItem('sqlSS')||'0'),si=null;
+let modTimes=JSON.parse(localStorage.getItem('sqlMT')||'{}'),curMod='',curModStart=Date.now();
+function p2(n){return String(n).padStart(2,'0');}
+function fmtS(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${h}:${p2(m)}:${p2(sec)}`:`${m}:${p2(sec)}`;}
+function updTimer(){const h=Math.floor(ss/3600),m=Math.floor((ss%3600)/60),s=ss%60;document.getElementById('session-timer').textContent=`${p2(h)}:${p2(m)}:${p2(s)}`;}
+function startTimer(){si=setInterval(()=>{ss++;localStorage.setItem('sqlSS',ss);updTimer();},1000);}
+function trackMod(mt){
+  if(curMod&&curMod!==mt){const e=Math.floor((Date.now()-curModStart)/1000);modTimes[curMod]=(modTimes[curMod]||0)+e;localStorage.setItem('sqlMT',JSON.stringify(modTimes));}
+  curMod=mt;curModStart=Date.now();
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInterval(si);trackMod(curMod);}else{curModStart=Date.now();startTimer();}});
+function rstAll(){if(!confirm('Reset all progress?'))return;['sqlSS','sqlMT','sqlSlide','sqlDone'].forEach(k=>localStorage.removeItem(k));ss=0;modTimes={};updTimer();goTo(0);renderStats();}
+
+// ── STATS ────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const done=JSON.parse(localStorage.getItem('sqlDone')||'[]');
+  document.getElementById('scards').innerHTML=[
+    {v:fmtS(ss),l:'Total Study Time'},{v:`${cur+1}/${slides.length}`,l:'Slides Reached'},
+    {v:`${done.length}/${assignments.length}`,l:'Assignments Done'},{v:`M${slides[cur]?slides[cur].m:'?'}`,l:'Current Module'}
+  ].map(c=>`<div class="sc"><div class="scv">${c.v}</div><div class="scl">${c.l}</div></div>`).join('');
+  const mx=Math.max(...Object.values(modTimes),1);
+  document.getElementById('mtimes').innerHTML=Object.entries(modTimes).sort((a,b)=>b[1]-a[1])
+    .map(([m,s])=>`<div class="mtr"><div class="mtl">${m.split(':')[0]}</div><div class="mtbw"><div class="mtb" style="width:${(s/mx*100).toFixed(0)}%"></div></div><div class="mtv">${fmtS(s)}</div></div>`).join('')||'<div style="color:var(--mut);font-size:12px">Start studying to see time breakdowns.</div>';
+}
+
+// ── SQL IDE ───────────────────────────────────────────────────────────────────
+let db=null;
+const schema={
+  employees:'id,first_name,last_name,email,salary,department_id,manager_id,hire_date,city',
+  departments:'id,name,budget,location',
+  customers:'id,name,email,city,country,signup_date,status',
+  products:'id,name,category,price,stock_quantity',
+  orders:'id,customer_id,order_date,status,total_amount',
+  order_items:'id,order_id,product_id,quantity,unit_price',
+  accounts:'id,customer_id,account_type,balance,created_date',
+  transactions:'id,account_id,type,amount,txn_date,description'
+};
+
+async function initDB(){
+  document.getElementById('dbs').textContent='● Loading…';
+  try{
+    const SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
+    db=new SQL.Database();
+    seedDB();
+    document.getElementById('dbs').innerHTML='<span style="color:var(--grn)">● Connected — 8 tables loaded</span>';
+    renderSchema();
+  }catch(e){
+    // fallback CDN
+    try{
+      const SQL2=await initSqlJs({locateFile:f=>`https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/${f}`});
+      db=new SQL2.Database();
+      seedDB();
+      document.getElementById('dbs').innerHTML='<span style="color:var(--grn)">● Connected — 8 tables loaded</span>';
+      renderSchema();
+    }catch(e2){document.getElementById('dbs').innerHTML=`<span style="color:var(--red)">● DB error: ${e2.message}</span>`;}
+  }
+}
+
+function seedDB(){
+  db.run(`CREATE TABLE departments(id INTEGER PRIMARY KEY,name TEXT,budget REAL,location TEXT);
+INSERT INTO departments VALUES(1,'Engineering',1200000,'San Francisco'),(2,'Marketing',450000,'New York'),(3,'Sales',600000,'Chicago'),(4,'HR',200000,'Austin'),(5,'Finance',350000,'Boston');
+
+CREATE TABLE employees(id INTEGER PRIMARY KEY,first_name TEXT,last_name TEXT,email TEXT,salary REAL,department_id INTEGER,manager_id INTEGER,hire_date TEXT,city TEXT);
+INSERT INTO employees VALUES
+(1,'Alice','Smith','alice@co.com',95000,1,NULL,'2019-03-15','San Francisco'),
+(2,'Bob','Jones','bob@co.com',72000,1,1,'2020-07-01','San Francisco'),
+(3,'Carol','Lee','carol@co.com',88000,1,1,'2018-11-20','Remote'),
+(4,'Dave','Kim','dave@co.com',65000,2,NULL,'2021-01-10','New York'),
+(5,'Eve','Park','eve@co.com',78000,2,4,'2020-05-15','New York'),
+(6,'Frank','Wu','frank@co.com',55000,3,NULL,'2022-03-01','Chicago'),
+(7,'Grace','Chen','grace@co.com',62000,3,6,'2021-09-15','Chicago'),
+(8,'Hank','Brown','hank@co.com',115000,1,1,'2017-06-10','San Francisco'),
+(9,'Iris','Davis','iris@co.com',48000,4,NULL,'2023-02-20','Austin'),
+(10,'Jack','Miller','jack@co.com',92000,5,NULL,'2019-08-05','Boston'),
+(11,'Kate','Wilson','kate@co.com',83000,1,1,'2020-12-01','Remote'),
+(12,'Leo','Moore','leo@co.com',71000,2,4,'2021-04-15','New York'),
+(13,'Mia','Taylor','mia@co.com',67000,3,6,'2022-07-10','Chicago'),
+(14,'Ned','Anderson','ned@co.com',59000,4,9,'2022-11-15','Austin'),
+(15,'Ora','Thomas','ora@co.com',102000,5,10,'2018-04-25','Boston'),
+(16,'Pat','Jackson','pat@co.com',76000,1,1,'2021-06-30','San Francisco'),
+(17,'Quinn','White','quinn@co.com',53000,3,6,'2023-01-10','Remote'),
+(18,'Rosa','Harris','rosa@co.com',89000,2,4,'2019-10-15','New York'),
+(19,'Sam','Martin','sam@co.com',44000,4,9,'2023-05-20','Austin'),
+(20,'Tara','Garcia','tara@co.com',98000,1,1,'2018-09-12','San Francisco');
+
+CREATE TABLE customers(id INTEGER PRIMARY KEY,name TEXT,email TEXT,city TEXT,country TEXT,signup_date TEXT,status TEXT);
+INSERT INTO customers VALUES
+(1,'Alice Johnson','alicej@email.com','New York','USA','2022-01-15','active'),
+(2,'Bob Smith','bobs@email.com','London','UK','2021-06-20','active'),
+(3,'Carol White','carolw@email.com','Toronto','Canada','2022-03-10','active'),
+(4,'Dave Lee','davl@email.com','Sydney','Australia','2021-11-05','inactive'),
+(5,'Eve Brown','eveb@email.com','New York','USA','2022-07-22','active'),
+(6,'Frank Davis','frankd@email.com','Chicago','USA','2020-09-14','active'),
+(7,'Grace Wilson','gracew@email.com','London','UK','2023-01-08','active'),
+(8,'Hank Moore','hankm@email.com','Paris','France','2022-05-30','inactive'),
+(9,'Iris Taylor','irist@email.com','New York','USA','2021-12-01','active'),
+(10,'Jack Anderson','jacka@email.com','Berlin','Germany','2023-02-15','active'),
+(11,'Kate Thomas','katet@email.com','Chicago','USA','2022-08-19','active'),
+(12,'Leo Jackson','leoj@email.com','Toronto','Canada','2021-04-25','active'),
+(13,'Mia Harris','miah@email.com','Sydney','Australia','2023-03-05','active'),
+(14,'Ned Martin','nedm@email.com','New York','USA','2020-11-30','inactive'),
+(15,'Ora Garcia','orag@email.com','London','UK','2022-10-12','active');
+
+CREATE TABLE products(id INTEGER PRIMARY KEY,name TEXT,category TEXT,price REAL,stock_quantity INTEGER);
+INSERT INTO products VALUES
+(1,'iPhone 15','Electronics',999.99,150),(2,'MacBook Pro','Electronics',1999.99,45),
+(3,'Samsung TV 55"','Electronics',699.99,80),(4,'Nike Air Max','Clothing',89.99,300),
+(5,'Levi Jeans','Clothing',59.99,500),(6,'SQL Book Pro','Books',49.99,200),
+(7,'Python Cookbook','Books',39.99,180),(8,'Wireless Headphones','Electronics',149.99,220),
+(9,'Coffee Maker','Home',79.99,120),(10,'Yoga Mat','Sports',29.99,350),
+(11,'Running Shoes','Sports',119.99,180),(12,'Desk Lamp','Home',34.99,250),
+(13,'USB-C Hub','Electronics',45.99,400),(14,'Backpack','Clothing',69.99,160),
+(15,'Water Bottle','Sports',19.99,600),(16,'Keyboard Mech','Electronics',129.99,90),
+(17,'Monitor 27"','Electronics',349.99,55),(18,'Standing Desk','Home',449.99,30),
+(19,'Protein Powder','Sports',54.99,200),(20,'Cookbook Vol2','Books',32.99,140);
+
+CREATE TABLE orders(id INTEGER PRIMARY KEY,customer_id INTEGER,order_date TEXT,status TEXT,total_amount REAL);
+INSERT INTO orders VALUES
+(1,1,'2024-01-05','completed',299.98),(2,1,'2024-02-10','completed',999.99),
+(3,2,'2024-01-15','completed',149.99),(4,3,'2024-01-20','shipped',1999.99),
+(5,5,'2024-02-01','completed',179.98),(6,6,'2024-01-08','completed',49.99),
+(7,6,'2024-03-15','completed',699.99),(8,9,'2024-02-20','completed',219.98),
+(9,11,'2024-01-25','returned',89.99),(10,12,'2024-03-01','completed',319.97),
+(11,1,'2024-03-10','completed',149.99),(12,5,'2024-03-20','shipped',449.99),
+(13,7,'2024-02-14','completed',79.99),(14,10,'2024-01-30','completed',189.98),
+(15,15,'2024-03-05','completed',129.99),(16,2,'2024-03-25','processing',349.99),
+(17,3,'2024-02-28','completed',89.99),(18,13,'2024-04-01','completed',164.98),
+(19,9,'2024-04-05','shipped',399.99),(20,11,'2024-04-10','completed',74.98),
+(21,1,'2024-04-15','completed',54.99),(22,6,'2024-04-20','completed',259.98),
+(23,15,'2024-04-25','completed',39.99),(24,7,'2024-05-01','processing',1999.99),
+(25,14,'2024-05-05','completed',109.98);
+
+CREATE TABLE order_items(id INTEGER PRIMARY KEY,order_id INTEGER,product_id INTEGER,quantity INTEGER,unit_price REAL);
+INSERT INTO order_items VALUES
+(1,1,10,2,29.99),(2,1,15,1,19.99),(3,2,1,1,999.99),(4,3,8,1,149.99),
+(5,4,2,1,1999.99),(6,5,4,1,89.99),(7,5,15,3,19.99),(8,6,6,1,49.99),
+(9,7,3,1,699.99),(10,8,13,2,45.99),(11,8,16,1,129.99),(12,9,4,1,89.99),
+(13,10,7,2,39.99),(14,10,6,1,49.99),(15,10,15,2,19.99),(16,11,8,1,149.99),
+(17,12,18,1,449.99),(18,13,9,1,79.99),(19,14,11,1,119.99),(20,14,15,1,19.99),
+(21,15,16,1,129.99),(22,16,17,1,349.99),(23,17,4,1,89.99),(24,18,8,1,149.99),
+(25,18,15,1,19.99),(26,19,2,1,399.99),(27,20,10,2,29.99),(28,21,6,1,54.99),
+(29,22,3,1,699.99),(30,22,13,1,45.99),(31,23,7,1,39.99),(32,24,2,1,1999.99),
+(33,25,9,1,79.99),(34,25,15,2,19.99);
+
+CREATE TABLE accounts(id INTEGER PRIMARY KEY,customer_id INTEGER,account_type TEXT,balance REAL,created_date TEXT);
+INSERT INTO accounts VALUES
+(1,1,'checking',5420.50,'2022-01-15'),(2,1,'savings',12000.00,'2022-01-15'),
+(3,2,'checking',3200.75,'2021-06-20'),(4,5,'checking',8750.00,'2022-07-22'),
+(5,6,'savings',25000.00,'2020-09-14'),(6,9,'checking',1200.00,'2021-12-01'),
+(7,11,'savings',45000.00,'2022-08-19'),(8,12,'checking',6300.25,'2021-04-25'),
+(9,15,'checking',9800.00,'2022-10-12'),(10,3,'savings',18500.00,'2022-03-10');
+
+CREATE TABLE transactions(id INTEGER PRIMARY KEY,account_id INTEGER,type TEXT,amount REAL,txn_date TEXT,description TEXT);
+INSERT INTO transactions VALUES
+(1,1,'debit',299.98,'2024-01-05','Order #1'),(2,1,'debit',999.99,'2024-02-10','Order #2'),
+(3,1,'credit',2000.00,'2024-01-01','Salary deposit'),(4,2,'credit',500.00,'2024-01-15','Transfer in'),
+(5,3,'debit',149.99,'2024-01-15','Order #3'),(6,3,'credit',3000.00,'2024-01-02','Salary deposit'),
+(7,4,'debit',179.98,'2024-02-01','Order #5'),(8,4,'credit',5000.00,'2024-02-01','Salary deposit'),
+(9,5,'credit',1500.00,'2024-01-10','Investment return'),(10,6,'debit',219.98,'2024-02-20','Order #8'),
+(11,6,'credit',800.00,'2024-02-15','Paycheck'),(12,7,'credit',3000.00,'2024-01-01','Salary'),
+(13,7,'debit',89.99,'2024-01-25','Order #9'),(14,8,'debit',319.97,'2024-03-01','Order #10'),
+(15,8,'credit',2500.00,'2024-03-01','Salary'),(16,9,'credit',4000.00,'2024-01-01','Salary'),
+(17,9,'debit',129.99,'2024-03-05','Order #15'),(18,10,'credit',2200.00,'2024-01-01','Salary'),
+(19,10,'debit',89.99,'2024-02-28','Order #17'),(20,1,'credit',3000.00,'2024-02-01','Salary deposit'),
+(21,2,'debit',39.99,'2024-01-10','Subscription'),(22,3,'debit',9.99,'2024-01-10','Subscription'),
+(23,4,'credit',5000.00,'2024-03-01','Salary deposit'),(24,5,'debit',1999.99,'2024-01-20','Order #4'),
+(25,6,'debit',49.99,'2024-01-08','Order #6'),(26,7,'credit',1000.00,'2024-02-01','Bonus'),
+(27,8,'credit',2500.00,'2024-04-01','Salary'),(28,9,'debit',1999.99,'2024-04-10','Order #19'),
+(29,10,'debit',74.98,'2024-04-15','Order #20'),(30,1,'debit',54.99,'2024-04-20','Order #21');`);
+}
+
+function renderSchema(){
+  document.getElementById('scont').innerHTML=Object.entries(schema).map(([t,cols])=>
+    `<div class="sct"><div class="sctn" onclick="document.getElementById('sqled').value='SELECT * FROM ${t} LIMIT 10;'">${t}</div><div class="scc">${cols.split(',').map(c=>`<span>${c}</span>`).join('<br>')}</div></div>`
+  ).join('');
+}
+
+function runQ(){
+  const sql=document.getElementById('sqled').value.trim();
+  if(!sql||!db){document.getElementById('res').innerHTML='<div class="errmsg">Database not ready yet.</div>';return;}
+  const t0=performance.now();
+  try{
+    const res=db.exec(sql);
+    const ms=(performance.now()-t0).toFixed(1);
+    if(!res.length){document.getElementById('res').innerHTML=`<div class="okmsg">✓ Query executed successfully (${ms}ms) — no rows returned</div>`;return;}
+    const{columns,values}=res[0];
+    document.getElementById('rcnt').textContent=`${values.length} rows · ${ms}ms`;
+    document.getElementById('res').innerHTML=`<div class="rmeta">${values.length} row${values.length!==1?'s':''} returned in ${ms}ms</div><div class="tbw"><table class="rtbl"><thead><tr>${columns.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${values.map(r=>`<tr>${r.map(v=>`<td>${v===null?'<span class="nv">NULL</span>':v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }catch(e){document.getElementById('res').innerHTML=`<div class="errmsg">❌ ${e.message}</div>`;}
+}
+document.getElementById('sqled').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();runQ();}if(e.key==='Tab'){e.preventDefault();const s=e.target,st=s.selectionStart;s.value=s.value.substring(0,st)+'  '+s.value.substring(s.selectionEnd);s.selectionStart=s.selectionEnd=st+2;}});
+
+// ── ASSIGNMENTS ───────────────────────────────────────────────────────────────
+const assignments=[
+{id:1,m:3,d:'beginner',t:'List all employees',desc:'Write a query to retrieve all columns from the employees table.',hint:'Use SELECT * to get all columns',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length===20?{p:true,msg:'✅ Correct! Got all 20 employees.'}:{p:false,msg:`❌ Expected 20 rows, got ${r.length?r[0].values.length:0}. Try: SELECT * FROM employees`};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:2,m:3,d:'beginner',t:'Show product names and prices',desc:'Get the name and price of all products, sorted by price from highest to lowest.',hint:'Use SELECT name, price ... ORDER BY price DESC',check:(db,sql)=>{try{const r=db.exec(sql);if(!r.length)return{p:false,msg:'❌ No results'};const cols=r[0].columns;return cols.includes('name')&&cols.includes('price')?{p:true,msg:'✅ Correct!'}:{p:false,msg:'❌ Make sure to select name and price columns'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:3,m:3,d:'beginner',t:'Top 5 highest paid employees',desc:'Show the first_name, last_name, and salary of the 5 highest paid employees.',hint:'ORDER BY salary DESC LIMIT 5',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length===5?{p:true,msg:'✅ Correct! Got exactly 5 rows.'}:{p:false,msg:`❌ Expected 5 rows, got ${r.length?r[0].values.length:0}`};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:4,m:3,d:'beginner',t:'Unique customer countries',desc:'List all unique countries from the customers table, sorted alphabetically.',hint:'Use SELECT DISTINCT ... ORDER BY',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length<=10?{p:true,msg:'✅ Correct! Got unique countries.'}:{p:false,msg:'❌ Use DISTINCT to remove duplicates'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:5,m:3,d:'beginner',t:'Annual salary calculation',desc:"Show each employee's first_name and their annual salary (multiply salary by 12). Alias the calculated column as 'annual_salary'.",hint:'SELECT first_name, salary * 12 AS annual_salary ...',check:(db,sql)=>{try{const r=db.exec(sql);if(!r.length)return{p:false,msg:'❌ No results'};const cols=r[0].columns;return(cols.includes('annual_salary')||cols.includes('Annual_salary'))?{p:true,msg:'✅ Correct! Annual salary calculated.'}:{p:false,msg:"❌ Alias the column as 'annual_salary'"};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:6,m:4,d:'beginner',t:'Electronics under $200',desc:'Find all products in the Electronics category with price less than $200.',hint:'WHERE category = ... AND price < ...',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length>0?{p:true,msg:`✅ Found ${r[0].values.length} products!`}:{p:false,msg:'❌ Check your WHERE conditions'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:7,m:4,d:'beginner',t:'Customers in USA or UK',desc:'Find all customers from USA or UK.',hint:'Use IN operator: WHERE country IN (...)',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length===7?{p:true,msg:'✅ Correct! 7 customers from USA/UK.'}:{p:false,msg:`❌ Expected 7, got ${r.length?r[0].values.length:0}. Use WHERE country IN ('USA','UK')`};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:8,m:4,d:'beginner',t:'Products priced between $50 and $150',desc:'Find all products with price between $50 and $150 (inclusive).',hint:'Use BETWEEN 50 AND 150',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length>0?{p:true,msg:`✅ Found ${r[0].values.length} products!`}:{p:false,msg:'❌ Use BETWEEN ... AND ...'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:9,m:4,d:'intermediate',t:'Employees with no manager (top level)',desc:'Find all employees who have no manager (manager_id is NULL). These are the top-level executives.',hint:'WHERE manager_id IS NULL — never use = NULL!',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length===4?{p:true,msg:'✅ Correct! Found 4 top-level managers.'}:{p:false,msg:`❌ Expected 4, got ${r.length?r[0].values.length:0}. Use IS NULL`};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:10,m:4,d:'intermediate',t:'Customers who have placed orders',desc:'Find all customers who have placed at least one order. Use EXISTS.',hint:'WHERE EXISTS (SELECT 1 FROM orders WHERE orders.customer_id = customers.id)',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length>0?{p:true,msg:`✅ Found ${r[0].values.length} customers with orders!`}:{p:false,msg:'❌ Use EXISTS with a correlated subquery'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:11,m:5,d:'beginner',t:'Insert a new product',desc:"Insert a new product: name='Gaming Mouse', category='Electronics', price=49.99, stock_quantity=100. Then run SELECT * FROM products WHERE name='Gaming Mouse' to verify.",hint:'INSERT INTO products (name, category, price, stock_quantity) VALUES (...)',check:(db,sql)=>{try{db.exec(sql);const r=db.exec("SELECT * FROM products WHERE name='Gaming Mouse'");return r.length&&r[0].values.length>0?{p:true,msg:'✅ Product inserted successfully!'}:{p:false,msg:"❌ Product not found. Check your INSERT statement."};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:12,m:5,d:'intermediate',t:'Give Engineering a 10% raise',desc:"Update the salary of all employees in department_id=1 (Engineering) by multiplying their salary by 1.10 (10% raise).",hint:'UPDATE employees SET salary = salary * 1.10 WHERE department_id = 1',check:(db,sql)=>{try{db.exec(sql);const r=db.exec('SELECT AVG(salary) as avg FROM employees WHERE department_id=1');return r.length?{p:true,msg:`✅ Raise applied! Avg Engineering salary now: $${Math.round(r[0].values[0][0]).toLocaleString()}`}:{p:false,msg:'❌ Check your UPDATE statement'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:13,m:6,d:'beginner',t:'Orders with customer names',desc:'Get each order with the customer name. Show: order id, customer name, order_date, total_amount.',hint:'JOIN customers ON orders.customer_id = customers.id',check:(db,sql)=>{try{const r=db.exec(sql);if(!r.length)return{p:false,msg:'❌ No results'};const cols=r[0].columns.map(c=>c.toLowerCase());return(cols.some(c=>c.includes('name'))&&r[0].values.length>0)?{p:true,msg:`✅ ${r[0].values.length} orders with customer names!`}:{p:false,msg:'❌ Make sure to include customer name in results'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:14,m:6,d:'intermediate',t:'All customers and their order count',desc:'Show ALL customers and how many orders each has. Include customers with 0 orders. Show: name, order_count.',hint:'Use LEFT JOIN + COUNT(orders.id) — count on the joined table column, not *',check:(db,sql)=>{try{const r=db.exec(sql);if(!r.length)return{p:false,msg:'❌ No results'};return r[0].values.length===15?{p:true,msg:'✅ All 15 customers shown including those with 0 orders!'}:{p:false,msg:`❌ Expected 15 customers, got ${r[0].values.length}. Use LEFT JOIN to include customers without orders.`};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:15,m:6,d:'intermediate',t:'4-table join: customer + order + item + product',desc:'Write a query joining orders, customers, order_items, and products to show: customer name, product name, quantity, unit_price, order_date.',hint:'Chain: orders JOIN customers, JOIN order_items, JOIN products',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length>0&&r[0].columns.length>=4?{p:true,msg:`✅ ${r[0].values.length} rows from 4-table join!`}:{p:false,msg:'❌ Join all 4 tables: orders, customers, order_items, products'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:16,m:6,d:'advanced',t:'Employee and manager names (self join)',desc:"Show each employee's full name and their manager's full name. Use a self-join on the employees table. Show 'No Manager' for top-level employees.",hint:"LEFT JOIN employees m ON e.manager_id = m.id — use COALESCE for 'No Manager'",check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length===20?{p:true,msg:'✅ All 20 employees with manager names!'}:{p:false,msg:`❌ Expected 20 rows, got ${r.length?r[0].values.length:0}. Use LEFT JOIN on same table with two aliases.`};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:17,m:7,d:'beginner',t:'Department headcount and avg salary',desc:'For each department, show department_id, number of employees (headcount), and average salary. Sort by average salary descending.',hint:'GROUP BY department_id, use COUNT(*) and AVG(salary)',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length===5?{p:true,msg:'✅ All 5 departments summarized!'}:{p:false,msg:`❌ Expected 5 departments, got ${r.length?r[0].values.length:0}`};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:18,m:7,d:'intermediate',t:'Departments with avg salary over $75,000',desc:'Show only departments where the average salary exceeds $75,000.',hint:'Use HAVING AVG(salary) > 75000 — not WHERE',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length>0?{p:true,msg:`✅ Found ${r[0].values.length} high-salary departments!`}:{p:false,msg:'❌ Use HAVING (not WHERE) to filter on aggregated values'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:19,m:7,d:'intermediate',t:'Revenue by product category',desc:'Show total revenue per product category. Revenue = SUM(quantity * unit_price) from order_items joined with products. Sort by revenue descending.',hint:'JOIN order_items with products, GROUP BY category, SUM(quantity*unit_price)',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length>0?{p:true,msg:`✅ Revenue by ${r[0].values.length} categories calculated!`}:{p:false,msg:'❌ Join order_items and products, then GROUP BY category'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:20,m:8,d:'intermediate',t:'Employees earning above company average',desc:'Find all employees whose salary is above the company-wide average salary. Show first_name, last_name, salary.',hint:'WHERE salary > (SELECT AVG(salary) FROM employees)',check:(db,sql)=>{try{const r=db.exec(sql);return r.length&&r[0].values.length>0?{p:true,msg:`✅ Found ${r[0].values.length} above-average earners!`}:{p:false,msg:'❌ Use a subquery: WHERE salary > (SELECT AVG(salary) FROM employees)'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:21,m:8,d:'advanced',t:'CTE: employees above dept average',desc:'Use a CTE to find employees earning more than their own department average. Show first_name, salary, department_id, and dept_avg.',hint:'WITH dept_avg AS (SELECT department_id, AVG(salary)...) then JOIN back to employees',check:(db,sql)=>{try{const r=db.exec(sql);return sql.toLowerCase().includes('with')&&r.length&&r[0].values.length>0?{p:true,msg:`✅ CTE used! Found ${r[0].values.length} employees above dept average.`}:{p:false,msg:'❌ Use a WITH clause (CTE) to calculate department averages first'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:22,m:9,d:'intermediate',t:'Rank employees by salary per department',desc:"Add a RANK() to each employee based on salary within their department (highest salary = rank 1). Show first_name, department_id, salary, and rank.",hint:'RANK() OVER (PARTITION BY department_id ORDER BY salary DESC)',check:(db,sql)=>{try{const r=db.exec(sql);return sql.toLowerCase().includes('rank')&&sql.toLowerCase().includes('over')&&r.length&&r[0].values.length===20?{p:true,msg:'✅ All 20 employees ranked within their departments!'}:{p:false,msg:'❌ Use RANK() OVER (PARTITION BY department_id ORDER BY salary DESC)'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:23,m:9,d:'advanced',t:'Top 2 earners per department',desc:'Show only the top 2 highest-paid employees in each department. Use ROW_NUMBER() in a subquery.',hint:'Wrap ROW_NUMBER() in a subquery/CTE, then WHERE rn <= 2',check:(db,sql)=>{try{const r=db.exec(sql);return sql.toLowerCase().includes('row_number')&&r.length&&r[0].values.length<=10?{p:true,msg:`✅ Top 2 per dept — ${r[0].values.length} rows returned!`}:{p:false,msg:'❌ Use ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) then filter rn <= 2'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:24,m:9,d:'advanced',t:'Running total of order amounts',desc:'Show each order with a running total of total_amount ordered by order_date. Show: order_id, order_date, total_amount, running_total.',hint:'SUM(total_amount) OVER (ORDER BY order_date)',check:(db,sql)=>{try{const r=db.exec(sql);return sql.toLowerCase().includes('over')&&r.length&&r[0].values.length>0?{p:true,msg:`✅ Running total calculated across ${r[0].values.length} orders!`}:{p:false,msg:'❌ Use SUM(total_amount) OVER (ORDER BY order_date)'};}catch(e){return{p:false,msg:'❌ '+e.message};}}},
+{id:25,m:12,d:'advanced',t:'Find duplicate emails',desc:'Find any duplicate email addresses in the customers table (emails that appear more than once).',hint:'GROUP BY email HAVING COUNT(*) > 1',check:(db,sql)=>{try{const r=db.exec(sql);return{p:true,msg:r.length&&r[0].values.length>0?`✅ Found ${r[0].values.length} duplicate emails.`:'✅ Query correct — no duplicates found (data is clean).'};}catch(e){return{p:false,msg:'❌ '+e.message};}}}
+];
+
+let curA=null,cdInt=null,cdSecs=0;
+function renderAList(filter){
+  const done=JSON.parse(localStorage.getItem('sqlDone')||'[]');
+  const list=filter==='all'?assignments:assignments.filter(a=>a.d===filter);
+  document.getElementById('aitems').innerHTML=list.map(a=>`
+    <div class="ai ${done.includes(a.id)?'done':''}" id="ai-${a.id}" onclick="loadA(${a.id})">
+      <div class="aitt">M${a.m}: ${a.t}</div>
+      <div class="aimeta">
+        <span class="bdg ${a.d==='beginner'?'bb':a.d==='intermediate'?'bi':'ba'}">${a.d}</span>
+        ${done.includes(a.id)?'<span class="bdg bp">✓ done</span>':''}
+      </div>
+    </div>`).join('');
+}
+function fltA(f,btn){document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderAList(f);}
+function loadA(id){
+  curA=assignments.find(a=>a.id===id);if(!curA)return;
+  document.querySelectorAll('.ai').forEach(el=>el.classList.remove('on'));
+  const el=document.getElementById('ai-'+id);if(el)el.classList.add('on');
+  const done=JSON.parse(localStorage.getItem('sqlDone')||'[]');
+  document.getElementById('adet').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px">
+      <div>
+        <div class="adtl">M${curA.m}: ${curA.t}</div>
+        <span class="bdg ${curA.d==='beginner'?'bb':curA.d==='intermediate'?'bi':'ba'}">${curA.d}</span>
+        ${done.includes(curA.id)?'<span class="bdg bp" style="margin-left:6px">✓ Completed</span>':''}
+      </div>
+    </div>
+    <div class="adesc">${curA.desc}</div>
+    <div class="aschema">📋 Available tables: employees, departments, customers, products, orders, order_items, accounts, transactions</div>
+    <div id="cdwrap">
+      <span style="font-size:11px;color:var(--mut)">Timer:</span>
+      <div id="cdd" data-total="0">--:--</div>
+      <button class="cdbtn" onclick="startCD(5)">5 min</button>
+      <button class="cdbtn" onclick="startCD(10)">10 min</button>
+      <button class="cdbtn" onclick="startCD(15)">15 min</button>
+      <button class="cdbtn" onclick="stopCD()">Stop</button>
+    </div>
+    <button id="ahbtn" onclick="document.getElementById('ahint').style.display=document.getElementById('ahint').style.display==='block'?'none':'block'">💡 Show Hint</button>
+    <div id="ahint">${curA.hint}</div>
+    <textarea id="ased" placeholder="-- Write your SQL answer here..."></textarea>
+    <div class="aact">
+      <button id="arbtn" onclick="runAsgn()">▶ Run Query</button>
+      <button id="acbtn" onclick="checkA()">✓ Check Answer</button>
+    </div>
+    <div id="ares"></div>
+    <div id="afb"></div>`;
+}
+function startCD(mins){
+  clearInterval(cdInt);
+  cdSecs=mins*60;
+  document.getElementById('cdd').dataset.total=cdSecs;
+  updCD();
+  cdInt=setInterval(()=>{cdSecs--;if(cdSecs<=0){clearInterval(cdInt);document.getElementById('cdd').textContent='TIME UP!';document.getElementById('cdd').style.color='var(--red)';return;}updCD();},1000);
+}
+function stopCD(){clearInterval(cdInt);document.getElementById('cdd').textContent='--:--';document.getElementById('cdd').style.color='';}
+function updCD(){const d=document.getElementById('cdd');if(!d)return;d.textContent=`${p2(Math.floor(cdSecs/60))}:${p2(cdSecs%60)}`;const tot=parseInt(d.dataset.total)||1;const pct=cdSecs/tot;d.className=pct<0.2?'cd':pct<0.5?'cw':'';}
+function runAsgn(){
+  if(!db||!curA)return;
+  const sql=document.getElementById('ased').value.trim();
+  if(!sql)return;
+  try{const r=db.exec(sql);if(!r.length){document.getElementById('ares').innerHTML='<div class="okmsg">✓ No rows returned</div>';return;}const{columns,values}=r[0];document.getElementById('ares').innerHTML=`<div class="rmeta">${values.length} rows</div><div class="tbw"><table class="rtbl"><thead><tr>${columns.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${values.slice(0,20).map(row=>`<tr>${row.map(v=>`<td>${v===null?'<span class="nv">NULL</span>':v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}catch(e){document.getElementById('ares').innerHTML=`<div class="errmsg">❌ ${e.message}</div>`;}
+}
+function checkA(){
+  if(!db||!curA)return;
+  const sql=document.getElementById('ased').value.trim();
+  const fb=document.getElementById('afb');
+  if(!sql){fb.style.display='block';fb.className='afb ffal';fb.textContent='❌ Write a SQL query first!';return;}
+  const result=curA.check(db,sql);
+  fb.style.display='block';fb.className='afb '+(result.p?'fpas':'ffal');fb.textContent=result.msg;
+  if(result.p){const done=JSON.parse(localStorage.getItem('sqlDone')||'[]');if(!done.includes(curA.id)){done.push(curA.id);localStorage.setItem('sqlDone',JSON.stringify(done));}renderAList(document.querySelector('.fb.on')?.textContent==='All'?'all':document.querySelector('.fb.on')?.textContent?.toLowerCase()||'all');}
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  const sv=parseInt(localStorage.getItem('sqlSlide')||'0');
+  cur=Math.min(sv,slides.length-1);
+  renderSlide(cur);renderMNav();startTimer();updTimer();renderAList('all');initDB();
+  // set course tab active
+  document.getElementById('cp').style.display='flex';
+});
+</script>
+</body>
+</html>
